@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// AppTypography provides the typography scale for Nestify,
-/// utilizing Plus Jakarta Sans for clean modern readability
-/// and Space Grotesk for technical metrics and prices.
+/// AppTypography provides the core typography scale for Nestify,
+/// utilizing Plus Jakarta Sans for English and Cairo for Arabic.
 class AppTypography {
   AppTypography._();
 
@@ -77,6 +76,7 @@ class AppTypography {
     fontSize: 10,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5,
+    color: AppColors.textMuted,
   );
 
   // Numeric & Metrics (Space Grotesk)
@@ -99,4 +99,78 @@ class AppTypography {
     color: AppColors.neonCyan,
     letterSpacing: 0.2,
   );
+
+  /// Builds a full TextTheme customized for English (Plus Jakarta Sans) or Arabic (Cairo)
+  static TextTheme buildTextTheme({bool isArabic = false}) {
+    if (isArabic) {
+      return TextTheme(
+        displayLarge: GoogleFonts.cairo(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textPrimary,
+        ),
+        displayMedium: GoogleFonts.cairo(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        headlineLarge: GoogleFonts.cairo(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        headlineMedium: GoogleFonts.cairo(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+        bodyLarge: GoogleFonts.cairo(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+          height: 1.5,
+        ),
+        bodyMedium: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textSecondary,
+          height: 1.4,
+        ),
+        bodySmall: GoogleFonts.cairo(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textMuted,
+          height: 1.3,
+        ),
+        labelLarge: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        labelMedium: GoogleFonts.cairo(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+        ),
+        labelSmall: GoogleFonts.cairo(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textMuted,
+        ),
+      );
+    }
+
+    return TextTheme(
+      displayLarge: displayLarge,
+      displayMedium: displayMedium,
+      headlineLarge: headlineLarge,
+      headlineMedium: headlineMedium,
+      bodyLarge: bodyLarge,
+      bodyMedium: bodyMedium,
+      bodySmall: bodySmall,
+      labelLarge: labelLarge,
+      labelMedium: labelMedium,
+      labelSmall: labelSmall,
+    );
+  }
 }

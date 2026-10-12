@@ -3,11 +3,16 @@ import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
-/// AppTheme provides the global theme configuration for Nestify.
+/// AppTheme provides the global theme configuration for Nestify,
+/// with dynamic typographic switching between Cairo (Arabic) and Plus Jakarta Sans (English).
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get darkTheme {
+  static ThemeData get darkTheme => getTheme(isArabic: false);
+
+  static ThemeData getTheme({bool isArabic = false}) {
+    final textTheme = AppTypography.buildTextTheme(isArabic: isArabic);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -29,7 +34,7 @@ class AppTheme {
         centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        titleTextStyle: AppTypography.headlineMedium,
+        titleTextStyle: textTheme.headlineMedium,
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceDarkCard,
@@ -57,7 +62,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: AppTypography.labelLarge.copyWith(
+          textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -70,7 +75,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: AppTypography.labelLarge,
+          textStyle: textTheme.labelLarge,
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
@@ -86,18 +91,7 @@ class AppTheme {
         thickness: 1,
         space: 24,
       ),
-      textTheme: TextTheme(
-        displayLarge: AppTypography.displayLarge,
-        displayMedium: AppTypography.displayMedium,
-        headlineLarge: AppTypography.headlineLarge,
-        headlineMedium: AppTypography.headlineMedium,
-        bodyLarge: AppTypography.bodyLarge,
-        bodyMedium: AppTypography.bodyMedium,
-        bodySmall: AppTypography.bodySmall,
-        labelLarge: AppTypography.labelLarge,
-        labelMedium: AppTypography.labelMedium,
-        labelSmall: AppTypography.labelSmall,
-      ),
+      textTheme: textTheme,
     );
   }
 }

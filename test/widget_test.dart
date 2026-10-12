@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
+import 'package:nestify/core/localization/locale_bloc/locale_bloc.dart';
+import 'package:nestify/core/localization/locale_bloc/locale_event.dart';
 import 'package:nestify/core/network/mock_properties_data.dart';
 import 'package:nestify/features/co_living/presentation/bloc/co_living_bloc.dart';
 import 'package:nestify/features/co_living/presentation/bloc/co_living_event.dart';
@@ -14,17 +17,21 @@ void main() {
       final model = PropertyModel.fromJson(raw);
 
       expect(model.id, 'prop_001');
-      expect(model.title, 'The Obsidian Zenith Penthouse');
+      expect(model.title, 'Palm Hills Sky Penthouse (بنتهاوس بالم هيلز)');
       expect(model.vibeMatchPercentage, 98);
       expect(model.noiseLevelDb, 34);
       expect(model.formattedPrice, '\$1,450,000');
-      expect(model.pricePerSqFt, closeTo(1450000 / 1820, 0.01));
+      expect(model.pricePerSqFt, closeTo(1450000 / 2450, 0.01));
+      expect(model.developerName, 'Palm Hills Developments');
+      expect(model.rentalYieldPct, 12.8);
+      expect(model.hasVirtualTour360, isTrue);
       expect(model.styleVariants.containsKey('Minimalist Japandi'), isTrue);
       expect(model.styleVariants.containsKey('Cyberpunk Loft'), isTrue);
 
       final json = model.toJson();
       expect(json['id'], 'prop_001');
       expect(json['price'], 1450000.0);
+      expect(json['developerName'], 'Palm Hills Developments');
     });
 
     test('CoLivingBloc calculates down payments and monthly splits correctly', () async {
@@ -54,6 +61,43 @@ void main() {
       expect(bloc.state.splitMode, SplitMode.coRent);
 
       await bloc.close();
+    });
+
+    test('LocaleBloc toggles between English and Arabic seamlessly', () async {
+      final bloc = LocaleBloc();
+      expect(bloc.state.isArabic, isFalse);
+      expect(bloc.state.locale.languageCode, 'en');
+
+      bloc.add(const ToggleLocaleEvent());
+      await expectLater(
+        bloc.stream,
+        emits(predicate((s) => bloc.state.locale.languageCode == 'ar')),
+      );
+      expect(bloc.state.isArabic, isTrue);
+
+      bloc.add(const ToggleLocaleEvent());
+      await expectLater(
+        bloc.stream,
+        emits(predicate((s) => bloc.state.locale.languageCode == 'en')),
+      );
+      expect(bloc.state.isArabic, isFalse);
+
+      await bloc.close();
+    });
+
+    test('AppLocalizations provides accurate Arabic RTL translations', () {
+      final arL10n = AppLocalizations(const Locale('ar'));
+      expect(arL10n.isArabic, isTrue);
+      expect(arL10n.translate('app_name'), 'نيستيفاي');
+      expect(arL10n.translate('nav_explore'), 'اكتشف');
+      expect(arL10n.translate('roi_title'), 'تحليل العائد الاستثماري والنمو');
+      expect(arL10n.translate('nav_marketplace'), 'السوق العقاري');
+
+      final enL10n = AppLocalizations(const Locale('en'));
+      expect(enL10n.isArabic, isFalse);
+      expect(enL10n.translate('app_name'), 'NESTIFY');
+      expect(enL10n.translate('nav_explore'), 'Discover');
+      expect(enL10n.translate('nav_marketplace'), 'Marketplace');
     });
 
     testWidgets('MatchScoreBadge renders score and label correctly',

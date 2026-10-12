@@ -9,8 +9,11 @@ import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_eve
 import 'package:nestify/features/explore_feed/presentation/widgets/match_score_badge.dart';
 import 'package:nestify/features/co_living/presentation/widgets/smart_split_calculator.dart';
 import 'package:nestify/features/vibe_radar/presentation/widgets/vibe_radar_sheet.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 import '../widgets/sun_path_simulator.dart';
 import '../widgets/virtual_style_switcher.dart';
+import '../widgets/investment_roi_calculator.dart';
+import '../widgets/interactive_booking_sheet.dart';
 
 /// PropertyDetailsScreen provides the full interactive luxury experience
 /// including the Sun-Path Simulator, Virtual Style Switcher, and Smart Split Calculator.
@@ -31,158 +34,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   final PageController _pageController = PageController();
 
   void _showBookingDialog(BuildContext context) {
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 2));
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surfaceDark,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (modalContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Book Private Architecture Tour',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Exclusive 1-on-1 walkthrough of ${widget.property.title} with licensed spatial advisor.',
-                    style: AppTypography.bodySmall,
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceDarkElevated,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.borderCyan),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_month_rounded,
-                              color: AppColors.neonCyan,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDate,
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 60)),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                    colorScheme: const ColorScheme.dark(
-                                      primary: AppColors.neonCyan,
-                                      surface: AppColors.surfaceDark,
-                                    ),
-                                  ),
-                                  child: child!,
-                                );
-                              },
-                            );
-                            if (picked != null) {
-                              setModalState(() {
-                                selectedDate = picked;
-                              });
-                            }
-                          },
-                          child: const Text(
-                            'CHANGE',
-                            style: TextStyle(
-                              color: AppColors.neonCyan,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(modalContext).pop();
-                        context.read<ExploreFeedBloc>().add(
-                              BookTourRequestedEvent(
-                                property: widget.property,
-                                tourDate: selectedDate,
-                              ),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: AppColors.surfaceDarkElevated,
-                            content: Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: AppColors.neonCyan,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Tour reserved for ${selectedDate.month}/${selectedDate.day}. VIP confirmation sent to your wallet.',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text('Confirm VIP Tour Slot'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+    InteractiveBookingSheet.show(context, widget.property);
   }
 
   @override
@@ -575,6 +427,12 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                         propertyPrice: property.price,
                         isRent: property.priceType == 'rent',
                       ),
+                      const SizedBox(height: 28),
+
+                      // 4. Investment & Yield Analysis (ROI)
+                      InvestmentRoiCalculator(
+                        propertyPrice: property.price,
+                      ),
                       const SizedBox(height: 110), // Padding for persistent bottom bar
                     ],
                   ),
@@ -609,7 +467,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _showBookingDialog(context),
-                      child: const Text('Book VIP Tour'),
+                      child: Text(context.tr('book_vip_tour')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -620,7 +478,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                           SnackBar(
                             backgroundColor: AppColors.surfaceDarkElevated,
                             content: Text(
-                              'Smart Co-Offer protocol initialized for ${property.title}!',
+                              context.tr('offer_initialized'),
                               style: const TextStyle(
                                 color: AppColors.neonCyan,
                               ),
@@ -628,7 +486,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                           ),
                         );
                       },
-                      child: const Text('Co-Invest / Offer'),
+                      child: Text(context.tr('coinvest_offer')),
                     ),
                   ),
                 ],

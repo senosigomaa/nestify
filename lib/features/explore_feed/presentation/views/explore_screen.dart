@@ -8,6 +8,7 @@ import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_blo
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_event.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
 import 'package:nestify/features/explore_feed/presentation/widgets/swipeable_property_card.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
 import 'package:nestify/features/vibe_radar/presentation/widgets/vibe_radar_sheet.dart';
 
@@ -320,7 +321,7 @@ class ExploreScreen extends StatelessWidget {
 
                 // Bottom Action Controls
                 _buildActionControls(context, state),
-                const SizedBox(height: 12),
+                const SizedBox(height: 78),
               ],
             );
           },
@@ -533,6 +534,8 @@ class ExploreScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyDeckView(BuildContext context) {
+    final l10n = context.l10n;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -557,12 +560,12 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'All Caught Up!',
+              l10n.translate('all_caught_up'),
               style: AppTypography.displayMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'You have explored all architectural listings in this sector. Reset your deck to re-evaluate, or check your saved portfolio.',
+              l10n.translate('all_caught_up_desc'),
               style: AppTypography.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -572,7 +575,7 @@ class ExploreScreen extends StatelessWidget {
                 context.read<ExploreFeedBloc>().add(const ResetFeedDeckEvent());
               },
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Recharge Feed Deck'),
+              label: Text(l10n.translate('recharge_deck')),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-/// Clean Architecture Domain Entity representing a property listing.
+/// Clean Architecture Domain Entity representing a property listing with
+/// commercial real estate attributes (developer, installments, 360 VR, rental yield).
 class PropertyEntity extends Equatable {
   final String id;
   final String title;
@@ -25,6 +26,20 @@ class PropertyEntity extends Equatable {
   final List<String> amenities;
   final Map<String, String> styleVariants;
 
+  // Commercial Marketplace Extensions
+  final String developerName;
+  final double downPaymentPrice;
+  final double monthlyInstallmentPrice;
+  final int installmentYears;
+  final int deliveryYear;
+  final bool isFurnished;
+  final double rentalYieldPct;
+  final bool hasVirtualTour360;
+  final String contactPhone;
+  final String contactWhatsApp;
+  final String category; // 'villa', 'apartment', 'townhouse', 'studio', 'commercial'
+  final String currencySymbol;
+
   const PropertyEntity({
     required this.id,
     required this.title,
@@ -48,6 +63,18 @@ class PropertyEntity extends Equatable {
     required this.sunOrientation,
     required this.amenities,
     required this.styleVariants,
+    this.developerName = 'Emaar Misr / Palm Hills',
+    this.downPaymentPrice = 0.0,
+    this.monthlyInstallmentPrice = 0.0,
+    this.installmentYears = 8,
+    this.deliveryYear = 2026,
+    this.isFurnished = false,
+    this.rentalYieldPct = 11.8,
+    this.hasVirtualTour360 = true,
+    this.contactPhone = '+201009876543',
+    this.contactWhatsApp = '+201009876543',
+    this.category = 'apartment',
+    this.currencySymbol = '\$',
   });
 
   /// Formatted price with commas (e.g. $1,450,000)
@@ -63,11 +90,46 @@ class PropertyEntity extends Equatable {
       }
     }
     final formatted = buffer.toString().split('').reversed.join('');
-    return priceType == 'rent' ? '\$$formatted/mo' : '\$$formatted';
+    final sym = currencySymbol;
+    return priceType == 'rent' ? '$sym$formatted/mo' : '$sym$formatted';
   }
+
+  /// Formatted Down payment
+  String get formattedDownPayment {
+    final effectiveDown = downPaymentPrice > 0 ? downPaymentPrice : price * 0.10;
+    return '\$${_formatNum(effectiveDown)}';
+  }
+
+  /// Formatted Monthly installment
+  String get formattedMonthlyInstallment {
+    final effectiveMonthly = monthlyInstallmentPrice > 0
+        ? monthlyInstallmentPrice
+        : (price * 0.90) / (installmentYears * 12);
+    return '\$${_formatNum(effectiveMonthly)}/mo';
+  }
+
+  String _formatNum(double numVal) {
+    final str = numVal.toInt().toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = str.length - 1; i >= 0; i--) {
+      buffer.write(str[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        buffer.write(',');
+      }
+    }
+    return buffer.toString().split('').reversed.join('');
+  }
+
+  /// Area in Square Meters (Sqm)
+  int get areaSqm => (squareFeet * 0.092903).round();
 
   /// Price per square foot calculation
   double get pricePerSqFt => squareFeet > 0 ? price / squareFeet : 0.0;
+
+  /// Price per square meter calculation
+  double get pricePerSqm => areaSqm > 0 ? price / areaSqm : 0.0;
 
   @override
   List<Object?> get props => [
@@ -93,5 +155,17 @@ class PropertyEntity extends Equatable {
         sunOrientation,
         amenities,
         styleVariants,
+        developerName,
+        downPaymentPrice,
+        monthlyInstallmentPrice,
+        installmentYears,
+        deliveryYear,
+        isFurnished,
+        rentalYieldPct,
+        hasVirtualTour360,
+        contactPhone,
+        contactWhatsApp,
+        category,
+        currencySymbol,
       ];
 }

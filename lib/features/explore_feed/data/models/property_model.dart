@@ -25,6 +25,18 @@ class PropertyModel extends PropertyEntity {
     required super.sunOrientation,
     required super.amenities,
     required super.styleVariants,
+    super.developerName,
+    super.downPaymentPrice,
+    super.monthlyInstallmentPrice,
+    super.installmentYears,
+    super.deliveryYear,
+    super.isFurnished,
+    super.rentalYieldPct,
+    super.hasVirtualTour360,
+    super.contactPhone,
+    super.contactWhatsApp,
+    super.category,
+    super.currencySymbol,
   });
 
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +73,19 @@ class PropertyModel extends PropertyEntity {
             (k, v) => MapEntry(k, v.toString()),
           ) ??
           {},
+      developerName: json['developerName'] as String? ?? 'Emaar Misr / Palm Hills',
+      downPaymentPrice: (json['downPaymentPrice'] as num?)?.toDouble() ?? 0.0,
+      monthlyInstallmentPrice:
+          (json['monthlyInstallmentPrice'] as num?)?.toDouble() ?? 0.0,
+      installmentYears: (json['installmentYears'] as num?)?.toInt() ?? 8,
+      deliveryYear: (json['deliveryYear'] as num?)?.toInt() ?? 2026,
+      isFurnished: json['isFurnished'] as bool? ?? false,
+      rentalYieldPct: (json['rentalYieldPct'] as num?)?.toDouble() ?? 11.8,
+      hasVirtualTour360: json['hasVirtualTour360'] as bool? ?? true,
+      contactPhone: json['contactPhone'] as String? ?? '+201009876543',
+      contactWhatsApp: json['contactWhatsApp'] as String? ?? '+201009876543',
+      category: json['category'] as String? ?? 'apartment',
+      currencySymbol: json['currencySymbol'] as String? ?? '\$',
     );
   }
 
@@ -88,6 +113,18 @@ class PropertyModel extends PropertyEntity {
       'sunOrientation': sunOrientation,
       'amenities': amenities,
       'styleVariants': styleVariants,
+      'developerName': developerName,
+      'downPaymentPrice': downPaymentPrice,
+      'monthlyInstallmentPrice': monthlyInstallmentPrice,
+      'installmentYears': installmentYears,
+      'deliveryYear': deliveryYear,
+      'isFurnished': isFurnished,
+      'rentalYieldPct': rentalYieldPct,
+      'hasVirtualTour360': hasVirtualTour360,
+      'contactPhone': contactPhone,
+      'contactWhatsApp': contactWhatsApp,
+      'category': category,
+      'currencySymbol': currencySymbol,
     };
   }
 
@@ -115,57 +152,18 @@ class PropertyModel extends PropertyEntity {
       sunOrientation: entity.sunOrientation,
       amenities: entity.amenities,
       styleVariants: entity.styleVariants,
-    );
-  }
-
-  PropertyModel copyWith({
-    String? id,
-    String? title,
-    String? neighborhood,
-    double? price,
-    String? priceType,
-    List<String>? images,
-    int? vibeMatchPercentage,
-    int? noiseLevelDb,
-    int? coffeeShopProximityMins,
-    bool? petFriendly,
-    int? bedrooms,
-    int? bathrooms,
-    int? squareFeet,
-    bool? isVerified,
-    String? description,
-    int? commuteTechHubMins,
-    int? walkScore,
-    int? greenScore,
-    int? nightlifeScore,
-    String? sunOrientation,
-    List<String>? amenities,
-    Map<String, String>? styleVariants,
-  }) {
-    return PropertyModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      neighborhood: neighborhood ?? this.neighborhood,
-      price: price ?? this.price,
-      priceType: priceType ?? this.priceType,
-      images: images ?? this.images,
-      vibeMatchPercentage: vibeMatchPercentage ?? this.vibeMatchPercentage,
-      noiseLevelDb: noiseLevelDb ?? this.noiseLevelDb,
-      coffeeShopProximityMins:
-          coffeeShopProximityMins ?? this.coffeeShopProximityMins,
-      petFriendly: petFriendly ?? this.petFriendly,
-      bedrooms: bedrooms ?? this.bedrooms,
-      bathrooms: bathrooms ?? this.bathrooms,
-      squareFeet: squareFeet ?? this.squareFeet,
-      isVerified: isVerified ?? this.isVerified,
-      description: description ?? this.description,
-      commuteTechHubMins: commuteTechHubMins ?? this.commuteTechHubMins,
-      walkScore: walkScore ?? this.walkScore,
-      greenScore: greenScore ?? this.greenScore,
-      nightlifeScore: nightlifeScore ?? this.nightlifeScore,
-      sunOrientation: sunOrientation ?? this.sunOrientation,
-      amenities: amenities ?? this.amenities,
-      styleVariants: styleVariants ?? this.styleVariants,
+      developerName: entity.developerName,
+      downPaymentPrice: entity.downPaymentPrice,
+      monthlyInstallmentPrice: entity.monthlyInstallmentPrice,
+      installmentYears: entity.installmentYears,
+      deliveryYear: entity.deliveryYear,
+      isFurnished: entity.isFurnished,
+      rentalYieldPct: entity.rentalYieldPct,
+      hasVirtualTour360: entity.hasVirtualTour360,
+      contactPhone: entity.contactPhone,
+      contactWhatsApp: entity.contactWhatsApp,
+      category: entity.category,
+      currencySymbol: entity.currencySymbol,
     );
   }
 }

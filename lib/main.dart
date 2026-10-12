@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/constants/app_colors.dart';
 import 'core/di/injection_container.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/locale_bloc/locale_bloc.dart';
+import 'core/localization/locale_bloc/locale_event.dart';
+import 'core/localization/locale_bloc/locale_state.dart';
 import 'core/theme/app_theme.dart';
 import 'features/co_living/presentation/bloc/co_living_bloc.dart';
 import 'features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'features/explore_feed/presentation/bloc/explore_feed_event.dart';
-import 'features/explore_feed/presentation/views/explore_screen.dart';
+import 'features/navigation/presentation/views/main_navigation_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +34,7 @@ void main() async {
   runApp(const NestifyApp());
 }
 
-/// NestifyApp root application widget configuring dark luxury theme and global BLoCs.
+/// NestifyApp root application widget with dynamic locale switching and MainNavigationShell.
 class NestifyApp extends StatelessWidget {
   const NestifyApp({super.key});
 
@@ -37,6 +42,10 @@ class NestifyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<LocaleBloc>(
+          create: (context) =>
+              sl<LocaleBloc>()..add(const LoadSavedLocaleEvent()),
+        ),
         BlocProvider<ExploreFeedBloc>(
           create: (context) =>
               sl<ExploreFeedBloc>()..add(const LoadExploreFeedEvent()),
@@ -45,11 +54,23 @@ class NestifyApp extends StatelessWidget {
           create: (context) => sl<CoLivingBloc>(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Nestify',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        home: const ExploreScreen(),
+      child: BlocBuilder<LocaleBloc, LocaleState>(
+        builder: (context, localeState) {
+          return MaterialApp(
+            title: 'Nestify',
+            debugShowCheckedModeBanner: false,
+            locale: localeState.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: AppTheme.getTheme(isArabic: localeState.isArabic),
+            home: const MainNavigationShell(),
+          );
+        },
       ),
     );
   }
