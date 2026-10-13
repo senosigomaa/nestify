@@ -68,4 +68,24 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Nordic Minimalist Palette (Light Theme)
+  static const Color nordicBackground = Color(0xFFFBF9F5); // Warm ivory / cream
+  static const Color nordicSurface = Color(0xFFFFFFFF); // Crisp elevated white
+  static const Color nordicNavy = Color(0xFF0F1B2B); // Royal Deep Navy
+  static const Color nordicNavySecondary = Color(0xFF4A5568);
+  static const Color nordicNavyMuted = Color(0xFF718096);
+  static const Color champagneGold = Color(0xFFC5A880); // Champagne Brushed Gold
+  static const Color champagneGoldBright = Color(0xFFD4AF37);
+  static const Color champagneGoldGlow = Color(0x33C5A880);
+  static const Color forestGreen = Color(0xFF2D5A46); // Sophisticated Forest Green
+  static const Color forestGreenGlow = Color(0x262D5A46);
+  static const Color nordicBorder = Color(0x1F0F1B2B);
+  static const Color nordicShadow = Color(0x0A0F1B2B);
+
+  static const LinearGradient champagneGradient = LinearGradient(
+    colors: [champagneGoldBright, champagneGold],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }

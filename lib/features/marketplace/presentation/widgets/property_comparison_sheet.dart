@@ -106,27 +106,27 @@ class PropertyComparisonSheet extends StatelessWidget {
                   children: [
                     _buildComparisonRow(
                       label: l10n.translate('metric_price'),
-                      valA: propertyA.formattedPrice,
-                      valB: propertyB.formattedPrice,
+                      valA: propertyA.localizedPrice(l10n.isArabic),
+                      valB: propertyB.localizedPrice(l10n.isArabic),
                       highlightA: propertyA.price < propertyB.price,
                       highlightB: propertyB.price < propertyA.price,
                     ),
                     _buildComparisonRow(
                       label: l10n.translate('metric_price_sqm'),
-                      valA: '\$${propertyA.pricePerSqm.toInt()} / ${l10n.translate('sqm')}',
-                      valB: '\$${propertyB.pricePerSqm.toInt()} / ${l10n.translate('sqm')}',
+                      valA: '${AppLocalizations.formatPrice(propertyA.pricePerSqm, isArabic: l10n.isArabic)} / ${l10n.translate('sqm')}',
+                      valB: '${AppLocalizations.formatPrice(propertyB.pricePerSqm, isArabic: l10n.isArabic)} / ${l10n.translate('sqm')}',
                       highlightA: propertyA.pricePerSqm < propertyB.pricePerSqm,
                       highlightB: propertyB.pricePerSqm < propertyA.pricePerSqm,
                     ),
                     _buildComparisonRow(
                       label: l10n.translate('metric_down_payment'),
-                      valA: propertyA.formattedDownPayment,
-                      valB: propertyB.formattedDownPayment,
+                      valA: propertyA.localizedDownPayment(l10n.isArabic),
+                      valB: propertyB.localizedDownPayment(l10n.isArabic),
                     ),
                     _buildComparisonRow(
                       label: l10n.translate('metric_monthly'),
-                      valA: propertyA.formattedMonthlyInstallment,
-                      valB: propertyB.formattedMonthlyInstallment,
+                      valA: propertyA.localizedMonthlyInstallment(l10n.isArabic),
+                      valB: propertyB.localizedMonthlyInstallment(l10n.isArabic),
                     ),
                     _buildComparisonRow(
                       label: l10n.translate('metric_delivery'),

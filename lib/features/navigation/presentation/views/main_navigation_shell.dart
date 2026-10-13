@@ -35,8 +35,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Screen Viewport (IndexedStack preserves tab states and memory)
@@ -60,15 +63,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceDark.withValues(alpha: 0.88),
+                    color: Theme.of(context).cardColor.withValues(alpha: isDark ? 0.88 : 0.95),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: AppColors.neonCyan.withValues(alpha: 0.25),
+                      color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.35),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.6)
+                            : const Color(0x1A0F1B2B),
                         blurRadius: 28,
                         offset: const Offset(0, 10),
                       ),
@@ -82,27 +87,32 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildNavItem(
+                            context: context,
                             index: 0,
                             icon: Icons.home_work_rounded,
                             label: l10n.translate('nav_marketplace'),
                           ),
                           _buildNavItem(
+                            context: context,
                             index: 1,
                             icon: Icons.radar_rounded,
                             label: l10n.translate('nav_map'),
                           ),
                           _buildNavItem(
+                            context: context,
                             index: 2,
                             icon: Icons.group_work_rounded,
                             label: l10n.translate('nav_coliving'),
                           ),
                           _buildNavItem(
+                            context: context,
                             index: 3,
                             icon: Icons.favorite_rounded,
                             label: l10n.translate('nav_portfolio'),
                             badgeCount: savedCount > 0 ? savedCount : null,
                           ),
                           _buildNavItem(
+                            context: context,
                             index: 4,
                             icon: Icons.person_outline_rounded,
                             label: l10n.translate('nav_profile'),
@@ -121,12 +131,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   Widget _buildNavItem({
+    required BuildContext context,
     required int index,
     required IconData icon,
     required String label,
     int? badgeCount,
   }) {
     final isSelected = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: () {
@@ -143,12 +156,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.neonCyan.withValues(alpha: 0.15)
+              ? primaryColor.withValues(alpha: isDark ? 0.15 : 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           border: isSelected
               ? Border.all(
-                  color: AppColors.neonCyan.withValues(alpha: 0.4),
+                  color: primaryColor.withValues(alpha: 0.4),
                   width: 1,
                 )
               : null,
@@ -162,8 +175,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 Icon(
                   icon,
                   size: 20,
-                  color:
-                      isSelected ? AppColors.neonCyan : AppColors.textSecondary,
+                  color: isSelected
+                      ? primaryColor
+                      : (isDark ? AppColors.textSecondary : const Color(0xFF64748B)),
                 ),
                 if (badgeCount != null)
                   Positioned(
@@ -171,16 +185,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                     right: -6,
                     child: Container(
                       padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: AppColors.amberGold,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondary,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '$badgeCount',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.backgroundDark,
+                          color: isDark ? AppColors.backgroundDark : Colors.white,
                         ),
                       ),
                     ),
@@ -193,8 +207,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color:
-                    isSelected ? AppColors.neonCyan : AppColors.textMuted,
+                color: isSelected
+                    ? primaryColor
+                    : (isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
               ),
             ),
           ],

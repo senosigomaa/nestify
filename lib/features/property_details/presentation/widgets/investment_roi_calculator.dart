@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/constants/app_typography.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
 
@@ -34,19 +33,12 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
     _monthlyRent = (widget.propertyPrice * 0.0045).roundToDouble();
   }
 
-  String _formatCurrency(double amount) {
-    final int rounded = amount.round();
-    final str = rounded.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      buffer.write(str[i]);
-      count++;
-      if (count % 3 == 0 && i != 0) {
-        buffer.write(',');
-      }
-    }
-    return '\$${buffer.toString().split('').reversed.join('')}';
+  String _formatCurrency(double amount, [bool isArabic = false, bool isMonthly = false]) {
+    return AppLocalizations.formatPrice(
+      amount,
+      isArabic: isArabic,
+      isMonthly: isMonthly,
+    );
   }
 
   @override
@@ -65,12 +57,17 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
     final breakEvenYears =
         annualGrossRent > 0 ? (downPaymentAmount / annualGrossRent) : 0.0;
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkCard,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.neonCyan.withValues(alpha: 0.25),
+          color: theme.colorScheme.outlineVariant.withValues(
+            alpha: isDark ? 0.2 : 0.6,
+          ),
           width: 1.2,
         ),
       ),
@@ -89,49 +86,58 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.neonCyan.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.trending_up_rounded,
-                        color: AppColors.neonCyan,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.translate('roi_title'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        Text(
-                          '${grossYieldPct.toStringAsFixed(1)}% Gross Yield Projected',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.neonCyan,
-                          ),
+                        child: Icon(
+                          Icons.trending_up_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 20,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.translate('roi_title'),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${grossYieldPct.toStringAsFixed(1)}% ${l10n.isArabic ? "عائد سنوي متوقع" : "Gross Yield Projected"}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Icon(
                   _isExpanded
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.keyboard_arrow_down_rounded,
-                  color: AppColors.neonCyan,
+                  color: theme.colorScheme.primary,
                 ),
               ],
             ),
@@ -147,25 +153,25 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
                   child: _buildKpiBox(
                     title: l10n.translate('gross_yield'),
                     value: '${grossYieldPct.toStringAsFixed(2)}%',
-                    valueColor: AppColors.neonCyan,
+                    valueColor: theme.colorScheme.primary,
                     subtitle: 'Benchmark: > 4.5%',
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildKpiBox(
                     title: l10n.translate('capital_appreciation'),
-                    value: '+${_formatCurrency(capitalGrowth5Yr)}',
-                    valueColor: AppColors.amberGold,
+                    value: '+${_formatCurrency(capitalGrowth5Yr, l10n.isArabic)}',
+                    valueColor: theme.colorScheme.secondary,
                     subtitle: '+${((pow(1 + _annualAppreciationRate, 5) - 1) * 100).toInt()}% Total Gain',
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildKpiBox(
                     title: l10n.translate('breakeven'),
                     value: '${breakEvenYears.toStringAsFixed(1)} ${l10n.translate('years')}',
-                    valueColor: const Color(0xFF69F0AE),
+                    valueColor: theme.colorScheme.primary,
                     subtitle: 'Full Escrow Recoup',
                   ),
                 ),
@@ -178,17 +184,29 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  l10n.translate('expected_rent'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Text(
+                    l10n.translate('expected_rent'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  '${_formatCurrency(_monthlyRent)} / mo',
-                  style: AppTypography.priceTag.copyWith(fontSize: 16),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    _formatCurrency(_monthlyRent, l10n.isArabic, true),
+                    style: AppTypography.priceTag.copyWith(
+                      fontSize: 15,
+                      color: theme.colorScheme.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -196,8 +214,10 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
               value: _monthlyRent,
               min: (widget.propertyPrice * 0.002).roundToDouble(),
               max: (widget.propertyPrice * 0.008).roundToDouble(),
-              activeColor: AppColors.neonCyan,
-              inactiveColor: AppColors.surfaceDarkElevated,
+              activeColor: theme.colorScheme.primary,
+              inactiveColor: theme.colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.2 : 0.6,
+              ),
               onChanged: (val) {
                 setState(() {
                   _monthlyRent = val;
@@ -209,20 +229,25 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  l10n.translate('occupancy_rate'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Text(
+                    l10n.translate('occupancy_rate'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   '${(_occupancyRate * 100).toInt()}%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.amberGold,
+                    color: theme.colorScheme.secondary,
                   ),
                 ),
               ],
@@ -232,8 +257,10 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
               min: 0.70,
               max: 1.0,
               divisions: 6,
-              activeColor: AppColors.amberGold,
-              inactiveColor: AppColors.surfaceDarkElevated,
+              activeColor: theme.colorScheme.secondary,
+              inactiveColor: theme.colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.2 : 0.6,
+              ),
               onChanged: (val) {
                 setState(() {
                   _occupancyRate = val;
@@ -245,20 +272,29 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  l10n.translate('down_payment_target'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Text(
+                    l10n.translate('down_payment_target'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  '${(_downPaymentPct * 100).toInt()}% (${_formatCurrency(downPaymentAmount)})',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${(_downPaymentPct * 100).toInt()}% (${_formatCurrency(downPaymentAmount, l10n.isArabic)})',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -268,8 +304,10 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
               min: 0.10,
               max: 0.50,
               divisions: 8,
-              activeColor: AppColors.cyanVariant,
-              inactiveColor: AppColors.surfaceDarkElevated,
+              activeColor: theme.colorScheme.primary,
+              inactiveColor: theme.colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.2 : 0.6,
+              ),
               onChanged: (val) {
                 setState(() {
                   _downPaymentPct = val;
@@ -282,9 +320,15 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.backgroundDark.withValues(alpha: 0.7),
+                color: isDark
+                    ? const Color(0xFF141C2B)
+                    : const Color(0xFFF7F5F0),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderLight),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.2 : 0.6,
+                  ),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,20 +336,25 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        l10n.translate('equity_growth_projected'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
+                      Expanded(
+                        child: Text(
+                          l10n.translate('equity_growth_projected'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
-                        _formatCurrency(projected5YearValue),
-                        style: const TextStyle(
+                        _formatCurrency(projected5YearValue, l10n.isArabic),
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.neonCyan,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ],
@@ -322,7 +371,7 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
 
                       return Expanded(
                         child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
                           child: Column(
                             children: [
                               Container(
@@ -330,9 +379,10 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
-                                      AppColors.neonCyan
-                                          .withValues(alpha: 0.4 + (index * 0.15)),
-                                      AppColors.cyanVariant,
+                                      theme.colorScheme.primary.withValues(
+                                        alpha: 0.4 + (index * 0.15),
+                                      ),
+                                      theme.colorScheme.primary,
                                     ],
                                     begin: Alignment.bottomCenter,
                                     end: Alignment.topCenter,
@@ -342,11 +392,11 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Y${index + 1}',
-                                style: const TextStyle(
+                                l10n.isArabic ? 'س${index + 1}' : 'Y${index + 1}',
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textMuted,
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -370,10 +420,15 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
     required Color valueColor,
     required String subtitle,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkElevated,
+        color: isDark
+            ? const Color(0xFF141C2B)
+            : const Color(0xFFF7F5F0),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: valueColor.withValues(alpha: 0.25),
@@ -384,10 +439,10 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -404,9 +459,9 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

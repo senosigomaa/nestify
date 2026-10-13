@@ -101,61 +101,132 @@ class AppTypography {
   );
 
   /// Builds a full TextTheme customized for English (Plus Jakarta Sans) or Arabic (Cairo)
-  static TextTheme buildTextTheme({bool isArabic = false}) {
+  /// and supports Obsidian Dark (isDark = true) or Nordic Minimalist (isDark = false, Deep Navy).
+  static TextTheme buildTextTheme({bool isArabic = false, bool isDark = true}) {
+    final primaryTextColor = isDark ? AppColors.textPrimary : AppColors.nordicNavy;
+    final secondaryTextColor =
+        isDark ? AppColors.textSecondary : AppColors.nordicNavySecondary;
+    final mutedTextColor =
+        isDark ? AppColors.textMuted : AppColors.nordicNavyMuted;
+
     if (isArabic) {
       return TextTheme(
         displayLarge: GoogleFonts.cairo(
           fontSize: 32,
           fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
         ),
         displayMedium: GoogleFonts.cairo(
           fontSize: 26,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
         ),
         headlineLarge: GoogleFonts.cairo(
           fontSize: 22,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
         ),
         headlineMedium: GoogleFonts.cairo(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
         ),
         bodyLarge: GoogleFonts.cairo(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
           height: 1.5,
         ),
         bodyMedium: GoogleFonts.cairo(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: AppColors.textSecondary,
+          color: secondaryTextColor,
           height: 1.4,
         ),
         bodySmall: GoogleFonts.cairo(
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          color: AppColors.textMuted,
+          color: mutedTextColor,
           height: 1.3,
         ),
         labelLarge: GoogleFonts.cairo(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: primaryTextColor,
         ),
         labelMedium: GoogleFonts.cairo(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: secondaryTextColor,
         ),
         labelSmall: GoogleFonts.cairo(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: AppColors.textMuted,
+          color: mutedTextColor,
+        ),
+      );
+    }
+
+    if (!isDark) {
+      return TextTheme(
+        displayLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: primaryTextColor,
+          letterSpacing: -0.8,
+        ),
+        displayMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: primaryTextColor,
+          letterSpacing: -0.5,
+        ),
+        headlineLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: primaryTextColor,
+          letterSpacing: -0.3,
+        ),
+        headlineMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: primaryTextColor,
+        ),
+        bodyLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: primaryTextColor,
+          height: 1.5,
+        ),
+        bodyMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: secondaryTextColor,
+          height: 1.4,
+        ),
+        bodySmall: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: mutedTextColor,
+          height: 1.3,
+        ),
+        labelLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: primaryTextColor,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: secondaryTextColor,
+          letterSpacing: 0.2,
+        ),
+        labelSmall: GoogleFonts.plusJakartaSans(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: mutedTextColor,
         ),
       );
     }

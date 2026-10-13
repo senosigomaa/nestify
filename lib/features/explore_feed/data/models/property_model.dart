@@ -85,7 +85,7 @@ class PropertyModel extends PropertyEntity {
       contactPhone: json['contactPhone'] as String? ?? '+201009876543',
       contactWhatsApp: json['contactWhatsApp'] as String? ?? '+201009876543',
       category: json['category'] as String? ?? 'apartment',
-      currencySymbol: json['currencySymbol'] as String? ?? '\$',
+      currencySymbol: json['currencySymbol'] as String? ?? 'EGP',
     );
   }
 

@@ -69,6 +69,8 @@ class DirectConnectButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     if (isCompact) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -99,15 +101,15 @@ class DirectConnectButtons extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: AppColors.neonCyan.withValues(alpha: 0.18),
+                color: primaryColor.withValues(alpha: 0.18),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.neonCyan.withValues(alpha: 0.5),
+                  color: primaryColor.withValues(alpha: 0.5),
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.phone_in_talk_rounded,
-                color: AppColors.neonCyan,
+                color: primaryColor,
                 size: 15,
               ),
             ),
@@ -142,8 +144,8 @@ class DirectConnectButtons extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.neonCyan,
-              side: const BorderSide(color: AppColors.neonCyan, width: 1.2),
+              foregroundColor: primaryColor,
+              side: BorderSide(color: primaryColor, width: 1.2),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),

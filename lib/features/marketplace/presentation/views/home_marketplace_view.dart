@@ -12,6 +12,9 @@ import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_eve
 import 'package:nestify/features/explore_feed/presentation/views/explore_screen.dart';
 import 'package:nestify/features/marketplace/presentation/widgets/direct_connect_buttons.dart';
 import 'package:nestify/features/marketplace/presentation/widgets/property_comparison_sheet.dart';
+import 'package:nestify/core/theme/theme_bloc/theme_bloc.dart';
+import 'package:nestify/core/theme/theme_bloc/theme_event.dart';
+import 'package:nestify/core/theme/theme_bloc/theme_state.dart';
 import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
 
 /// HomeMarketplaceView is the flagship commercial real estate marketplace screen,
@@ -149,9 +152,12 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
     final l10n = context.l10n;
     final feed = _filteredProperties;
     final hotDeals = _hotDeals;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -169,50 +175,107 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                         // Location Dropdown
                         _buildLocationSelector(l10n),
 
-                        // Switch to Tinder Swipe Deck Mode
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ExploreScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.cyanGradient,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      AppColors.neonCyan.withValues(alpha: 0.3),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.style_rounded,
-                                  size: 15,
-                                  color: AppColors.backgroundDark,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  l10n.translate('mode_switch_swipe'),
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.backgroundDark,
+                        // Actions: Theme Switcher Toggle + Swipe Mode
+                        Row(
+                          children: [
+                            BlocBuilder<ThemeBloc, ThemeState>(
+                              builder: (context, themeState) {
+                                final isDarkTheme = themeState.isDark;
+                                return GestureDetector(
+                                  onTap: () {
+                                    context
+                                        .read<ThemeBloc>()
+                                        .add(const ToggleThemeEvent());
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 7,
+                                    ),
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: theme.cardColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: primaryColor.withValues(alpha: 0.6),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          isDarkTheme
+                                              ? Icons.light_mode_rounded
+                                              : Icons.dark_mode_rounded,
+                                          size: 14,
+                                          color: primaryColor,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          isDarkTheme
+                                              ? (l10n.isArabic ? 'فاتح' : 'Light')
+                                              : (l10n.isArabic ? 'داكن' : 'Dark'),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          ),
+                            // Switch to Tinder Swipe Deck Mode
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const ExploreScreen(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: isDark
+                                      ? AppColors.cyanGradient
+                                      : const LinearGradient(
+                                          colors: [Color(0xFFC5A880), Color(0xFFD4AF37)],
+                                        ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryColor.withValues(alpha: 0.3),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.style_rounded,
+                                      size: 15,
+                                      color: isDark ? AppColors.backgroundDark : Colors.white,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      l10n.translate('mode_switch_swipe'),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark ? AppColors.backgroundDark : Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -225,9 +288,20 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceDarkCard,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.borderLight),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.transparent
+                                : const Color(0x0A0F1B2B),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -236,19 +310,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                             _searchQuery = val;
                           });
                         },
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
                           hintText: l10n.translate('search_placeholder'),
-                          hintStyle: const TextStyle(
-                            color: AppColors.textMuted,
+                          hintStyle: TextStyle(
+                            color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
                             fontSize: 13,
                           ),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search_rounded,
-                            color: AppColors.neonCyan,
+                            color: primaryColor,
                             size: 20,
                           ),
                           suffixIcon: _searchQuery.isNotEmpty
@@ -259,15 +333,15 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                                       _searchQuery = '';
                                     });
                                   },
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.clear_rounded,
-                                    color: AppColors.textMuted,
+                                    color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
                                     size: 18,
                                   ),
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.tune_rounded,
-                                  color: AppColors.neonCyan,
+                                  color: primaryColor,
                                   size: 20,
                                 ),
                           border: InputBorder.none,
@@ -287,7 +361,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceDarkElevated,
+                        color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF0EDE6),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -363,7 +437,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           l10n.translate('exclusive_launches'),
-                          style: AppTypography.headlineMedium,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -396,28 +473,28 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                         children: [
                           Row(
                             children: [
-                              const Icon(
-                                Icons.local_fire_department_rounded,
-                                color: AppColors.sunsetOrange,
+                              Icon(
+                                Icons.trending_up_rounded,
+                                color: theme.colorScheme.secondary,
                                 size: 20,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 l10n.translate('section_hot_deals'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                             ],
                           ),
                           Text(
                             l10n.translate('view_all'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.neonCyan,
+                              color: primaryColor,
                             ),
                           ),
                         ],
@@ -454,14 +531,17 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           _transactionType == 'buy'
                               ? l10n.translate('section_for_sale')
                               : l10n.translate('section_for_rent'),
-                          style: AppTypography.headlineMedium,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         Text(
                           '${feed.length} ${l10n.translate('properties_count')}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
+                            color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -472,7 +552,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
 
                 // Properties Grid / List
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -505,24 +585,24 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceDark.withValues(alpha: 0.95),
+                    color: theme.cardColor.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.neonCyan,
+                      color: primaryColor,
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.neonCyan.withValues(alpha: 0.35),
+                        color: primaryColor.withValues(alpha: 0.35),
                         blurRadius: 16,
                       ),
                     ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.compare_arrows_rounded,
-                        color: AppColors.neonCyan,
+                        color: primaryColor,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -530,10 +610,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           _comparePropertyB == null
                               ? '${_comparePropertyA!.title} (1/2 selected)'
                               : 'Comparing 2 units',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: theme.colorScheme.onSurface,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -579,13 +659,17 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
   }
 
   Widget _buildLocationSelector(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+
     return PopupMenuButton<String>(
       onSelected: (loc) {
         setState(() {
           _selectedLocation = loc;
         });
       },
-      color: AppColors.surfaceDarkElevated,
+      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       itemBuilder: (ctx) => [
         PopupMenuItem(
@@ -612,24 +696,24 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.location_on_rounded,
-            color: AppColors.neonCyan,
+            color: primaryColor,
             size: 18,
           ),
           const SizedBox(width: 6),
           Text(
             _selectedLocation,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
+          Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: AppColors.neonCyan,
+            color: primaryColor,
             size: 18,
           ),
         ],
@@ -642,6 +726,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
     required String type,
   }) {
     final isSelected = _transactionType == type;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -652,7 +740,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.neonCyan : Colors.transparent,
+          color: isSelected ? primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -661,7 +749,9 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: isSelected ? AppColors.backgroundDark : AppColors.textMuted,
+              color: isSelected
+                  ? (isDark ? AppColors.backgroundDark : Colors.white)
+                  : (isDark ? AppColors.textMuted : const Color(0xFF64748B)),
             ),
           ),
         ),
@@ -675,6 +765,11 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
     required IconData icon,
   }) {
     final isSelected = _selectedCategory == id;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+    final textSecondary = isDark ? AppColors.textSecondary : const Color(0xFF64748B);
+
     return ChoiceChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -682,7 +777,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
           Icon(
             icon,
             size: 14,
-            color: isSelected ? AppColors.neonCyan : AppColors.textSecondary,
+            color: isSelected ? primaryColor : textSecondary,
           ),
           const SizedBox(width: 6),
           Text(label),
@@ -692,15 +787,17 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       onSelected: (val) {
         if (val) setState(() => _selectedCategory = id);
       },
-      selectedColor: AppColors.neonCyan.withValues(alpha: 0.18),
-      backgroundColor: AppColors.surfaceDarkElevated,
+      selectedColor: primaryColor.withValues(alpha: 0.18),
+      backgroundColor: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF0EDE6),
       labelStyle: TextStyle(
         fontSize: 12,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? AppColors.neonCyan : AppColors.textSecondary,
+        color: isSelected ? primaryColor : textSecondary,
       ),
       side: BorderSide(
-        color: isSelected ? AppColors.neonCyan : Colors.white.withValues(alpha: 0.08),
+        color: isSelected
+            ? primaryColor
+            : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE5E2DC)),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
@@ -800,6 +897,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
   }
 
   Widget _buildHotDealCard(PropertyEntity property, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -811,12 +912,21 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       child: Container(
         width: 220,
         decoration: BoxDecoration(
-          color: AppColors.surfaceDarkCard,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.sunsetOrange.withValues(alpha: 0.35),
+            color: theme.colorScheme.secondary.withValues(alpha: 0.4),
             width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : const Color(0x0A0F1B2B),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,16 +945,25 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                 ),
                 Positioned(
                   top: 8,
-                  left: 8,
+                  left: l10n.isArabic ? null : 8,
+                  right: l10n.isArabic ? 8 : null,
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.sunsetOrange,
+                      color: theme.colorScheme.secondary,
                       borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                        ),
+                      ],
                     ),
                     child: Text(
-                      '${property.rentalYieldPct}% ROI',
+                      l10n.isArabic
+                          ? 'عائد سنوي ${AppLocalizations.convertToArabicDigits(property.rentalYieldPct)}%'
+                          : '${property.rentalYieldPct}% Annual ROI',
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -861,16 +980,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    property.formattedPrice,
-                    style: AppTypography.priceTag.copyWith(fontSize: 16),
+                    property.localizedPrice(l10n.isArabic),
+                    style: AppTypography.priceTag.copyWith(
+                      fontSize: 16,
+                      color: primaryColor,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     property.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -878,9 +1000,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                   const SizedBox(height: 2),
                   Text(
                     property.developerName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.neonCyan,
+                      fontWeight: FontWeight.w700,
+                      color: primaryColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -899,6 +1022,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
     AppLocalizations l10n,
     bool isComparing,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -909,17 +1036,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceDarkCard,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isComparing
-                ? AppColors.neonCyan
-                : AppColors.borderLight,
+                ? primaryColor
+                : theme.colorScheme.outlineVariant,
             width: isComparing ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : const Color(0x0A0F1B2B),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -949,27 +1078,29 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundDark.withValues(alpha: 0.8),
+                      color: isDark
+                          ? AppColors.backgroundDark.withValues(alpha: 0.8)
+                          : Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.neonCyan.withValues(alpha: 0.5),
+                        color: primaryColor.withValues(alpha: 0.5),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_rounded,
                           size: 13,
-                          color: AppColors.neonCyan,
+                          color: primaryColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           l10n.translate('verified_100'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -987,24 +1118,24 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.amberGold,
+                        color: theme.colorScheme.secondary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.view_in_ar_rounded,
                             size: 13,
-                            color: AppColors.backgroundDark,
+                            color: isDark ? AppColors.backgroundDark : Colors.white,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             '360° VR',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.backgroundDark,
+                              color: isDark ? AppColors.backgroundDark : Colors.white,
                             ),
                           ),
                         ],
@@ -1022,10 +1153,12 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           .add(SwipeRightEvent(property));
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: AppColors.surfaceDarkElevated,
+                          backgroundColor: isDark
+                              ? AppColors.surfaceDarkElevated
+                              : const Color(0xFF0F1B2B),
                           content: Text(
                             l10n.translate('saved_to_portfolio'),
-                            style: const TextStyle(color: AppColors.neonCyan),
+                            style: TextStyle(color: primaryColor),
                           ),
                         ),
                       );
@@ -1033,13 +1166,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.backgroundDark.withValues(alpha: 0.75),
+                        color: isDark
+                            ? AppColors.backgroundDark.withValues(alpha: 0.75)
+                            : Colors.white.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white24),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white24
+                              : theme.colorScheme.outlineVariant,
+                        ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.favorite_rounded,
-                        color: AppColors.neonCyan,
+                        color: primaryColor,
                         size: 18,
                       ),
                     ),
@@ -1060,10 +1199,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     children: [
                       Text(
                         property.developerName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.neonCyan,
+                          color: primaryColor,
                         ),
                       ),
                       Container(
@@ -1072,15 +1211,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0xFFF0EDE6),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           property.category.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textSecondary,
+                            color: isDark
+                                ? AppColors.textSecondary
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ),
@@ -1091,10 +1234,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                   // Title
                   Text(
                     property.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1104,16 +1247,18 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                   // Neighborhood
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
                         size: 13,
-                        color: AppColors.textMuted,
+                        color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           property.neighborhood,
-                          style: AppTypography.bodySmall,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1130,7 +1275,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     children: [
                       Text(
                         property.formattedPrice,
-                        style: AppTypography.priceTag.copyWith(fontSize: 22),
+                        style: AppTypography.priceTag.copyWith(
+                          fontSize: 22,
+                          color: primaryColor,
+                        ),
                       ),
                       if (property.priceType == 'buy') ...[
                         Column(
@@ -1138,17 +1286,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           children: [
                             Text(
                               '${l10n.translate('down_payment')}: ${property.formattedDownPayment}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.amberGold,
+                                color: theme.colorScheme.secondary,
                               ),
                             ),
                             Text(
                               '${l10n.translate('monthly_installment')}: ${property.formattedMonthlyInstallment}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary,
+                                color: isDark
+                                    ? AppColors.textSecondary
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -1160,17 +1310,17 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF69F0AE).withValues(alpha: 0.15),
+                            color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             property.isFurnished
                                 ? l10n.translate('furnished')
                                 : l10n.translate('unfurnished'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF69F0AE),
+                              color: theme.colorScheme.secondary,
                             ),
                           ),
                         ),
@@ -1207,13 +1357,17 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           ),
                           decoration: BoxDecoration(
                             color: isComparing
-                                ? AppColors.neonCyan
-                                : AppColors.surfaceDarkElevated,
+                                ? primaryColor
+                                : (isDark
+                                    ? AppColors.surfaceDarkElevated
+                                    : const Color(0xFFF4F0E8)),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isComparing
-                                  ? AppColors.neonCyan
-                                  : Colors.white24,
+                                  ? primaryColor
+                                  : (isDark
+                                      ? Colors.white24
+                                      : theme.colorScheme.outlineVariant),
                             ),
                           ),
                           child: Row(
@@ -1223,8 +1377,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                                 Icons.compare_arrows_rounded,
                                 size: 13,
                                 color: isComparing
-                                    ? AppColors.backgroundDark
-                                    : AppColors.neonCyan,
+                                    ? (isDark
+                                        ? AppColors.backgroundDark
+                                        : Colors.white)
+                                    : primaryColor,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1233,8 +1389,10 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   color: isComparing
-                                      ? AppColors.backgroundDark
-                                      : AppColors.textPrimary,
+                                      ? (isDark
+                                          ? AppColors.backgroundDark
+                                          : Colors.white)
+                                      : theme.colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -1257,23 +1415,30 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
   }
 
   Widget _buildSpecPill(IconData icon, String label) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkElevated,
+        color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF4F0E8),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.textSecondary),
+          Icon(
+            icon,
+            size: 12,
+            color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+          ),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ],

@@ -53,10 +53,14 @@ class _PortfolioViewState extends State<PortfolioView>
     },
   ];
 
+  // Monetization Listing Packages state
+  String _activePlanId = 'starter';
+  String _selectedPackageId = 'featured';
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -68,9 +72,11 @@ class _PortfolioViewState extends State<PortfolioView>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -85,14 +91,16 @@ class _PortfolioViewState extends State<PortfolioView>
                     children: [
                       Text(
                         l10n.translate('saved_portfolio'),
-                        style: AppTypography.headlineLarge,
+                        style: AppTypography.headlineLarge.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                       Text(
                         l10n.translate('membership_tier'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.amberGold,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ],
@@ -107,37 +115,62 @@ class _PortfolioViewState extends State<PortfolioView>
                       _isGridView
                           ? Icons.view_list_rounded
                           : Icons.grid_view_rounded,
-                      color: AppColors.neonCyan,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Tab Bar
+            // Tab Bar with 3 Segments: Saved, Tours, Listing Packages
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.surfaceDarkElevated,
+                color: isDark
+                    ? const Color(0xFF141C2B)
+                    : const Color(0xFFEFECE6),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.2 : 0.6,
+                  ),
+                ),
               ),
               child: TabBar(
                 controller: _tabController,
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
                 indicator: BoxDecoration(
-                  color: AppColors.neonCyan,
-                  borderRadius: BorderRadius.circular(14),
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                labelColor: AppColors.backgroundDark,
-                unselectedLabelColor: AppColors.textSecondary,
+                labelColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                unselectedLabelColor:
+                    theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 labelStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
                 tabs: [
-                  Tab(text: l10n.translate('tab_saved')),
-                  Tab(text: l10n.translate('tab_tours')),
+                  Tab(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(l10n.translate('tab_saved')),
+                    ),
+                  ),
+                  Tab(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(l10n.translate('tab_tours')),
+                    ),
+                  ),
+                  Tab(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(l10n.translate('tab_packages')),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -160,13 +193,16 @@ class _PortfolioViewState extends State<PortfolioView>
                         );
                       }
                       return _isGridView
-                          ? _buildSavedGrid(saved)
-                          : _buildSavedList(saved);
+                          ? _buildSavedGrid(saved, l10n)
+                          : _buildSavedList(saved, l10n);
                     },
                   ),
 
                   // Tab 2: Scheduled Tours
                   _buildScheduledToursList(l10n),
+
+                  // Tab 3: Monetization Listing Packages Hub
+                  _buildListingPackagesView(l10n),
                 ],
               ),
             ),
@@ -176,10 +212,13 @@ class _PortfolioViewState extends State<PortfolioView>
     );
   }
 
-  Widget _buildSavedList(List<PropertyEntity> saved) {
+  Widget _buildSavedList(List<PropertyEntity> saved, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
       itemCount: saved.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -195,9 +234,13 @@ class _PortfolioViewState extends State<PortfolioView>
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceDarkCard,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(
+                  alpha: isDark ? 0.2 : 0.6,
+                ),
+              ),
             ),
             child: Row(
               children: [
@@ -216,37 +259,52 @@ class _PortfolioViewState extends State<PortfolioView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        prop.formattedPrice,
-                        style: AppTypography.priceTag.copyWith(fontSize: 18),
+                        l10n.isArabic ? prop.localizedPrice(true) : prop.formattedPrice,
+                        style: AppTypography.priceTag.copyWith(
+                          fontSize: 18,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        prop.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prop.title,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        prop.neighborhood,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prop.neighborhood,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppColors.neonCyan,
+                  color: theme.colorScheme.primary,
                 ),
               ],
             ),
@@ -256,10 +314,13 @@ class _PortfolioViewState extends State<PortfolioView>
     );
   }
 
-  Widget _buildSavedGrid(List<PropertyEntity> saved) {
+  Widget _buildSavedGrid(List<PropertyEntity> saved, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GridView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 14,
@@ -279,9 +340,13 @@ class _PortfolioViewState extends State<PortfolioView>
           },
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surfaceDarkCard,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(
+                  alpha: isDark ? 0.2 : 0.6,
+                ),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,29 +367,44 @@ class _PortfolioViewState extends State<PortfolioView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        prop.formattedPrice,
-                        style: AppTypography.priceTag.copyWith(fontSize: 16),
+                        l10n.isArabic ? prop.localizedPrice(true) : prop.formattedPrice,
+                        style: AppTypography.priceTag.copyWith(
+                          fontSize: 16,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        prop.title,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prop.title,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        prop.neighborhood,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prop.neighborhood,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -338,9 +418,12 @@ class _PortfolioViewState extends State<PortfolioView>
   }
 
   Widget _buildScheduledToursList(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
       itemCount: _mockTours.length,
       separatorBuilder: (_, _) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
@@ -351,10 +434,10 @@ class _PortfolioViewState extends State<PortfolioView>
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDarkCard,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: AppColors.neonCyan.withValues(alpha: 0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.35),
               width: 1.2,
             ),
           ),
@@ -369,15 +452,15 @@ class _PortfolioViewState extends State<PortfolioView>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.neonCyan.withValues(alpha: 0.15),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${l10n.translate('tour_in')} ${tour['daysLeft']} ${l10n.translate('days')}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.neonCyan,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ),
@@ -385,15 +468,15 @@ class _PortfolioViewState extends State<PortfolioView>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.amberGold.withValues(alpha: 0.15),
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       isVr ? 'SPATIAL VR TOUR' : 'IN-PERSON VIP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.amberGold,
+                        color: theme.colorScheme.secondary,
                       ),
                     ),
                   ),
@@ -402,21 +485,37 @@ class _PortfolioViewState extends State<PortfolioView>
               const SizedBox(height: 12),
 
               // Title & Date
-              Text(
-                tour['title'],
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      tour['title'],
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 2),
-              Text(
-                tour['neighborhood'],
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      tour['neighborhood'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
 
@@ -424,25 +523,32 @@ class _PortfolioViewState extends State<PortfolioView>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceDarkElevated,
+                  color: isDark
+                      ? const Color(0xFF141C2B)
+                      : const Color(0xFFF7F5F0),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: isDark ? 0.2 : 0.6,
+                    ),
+                  ),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.access_time_rounded,
                           size: 14,
-                          color: AppColors.neonCyan,
+                          color: theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           '${tour['date']} @ ${tour['time']}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -451,17 +557,17 @@ class _PortfolioViewState extends State<PortfolioView>
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.directions_car_filled_rounded,
                             size: 14,
-                            color: Color(0xFF69F0AE),
+                            color: theme.colorScheme.secondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             l10n.translate('chauffeur_assigned'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF69F0AE),
+                              color: theme.colorScheme.secondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -517,6 +623,8 @@ class _PortfolioViewState extends State<PortfolioView>
     required String title,
     required String subtitle,
   }) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -526,26 +634,614 @@ class _PortfolioViewState extends State<PortfolioView>
             Icon(
               icon,
               size: 56,
-              color: AppColors.textMuted.withValues(alpha: 0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 14),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               subtitle,
-              style: AppTypography.bodySmall,
+              style: AppTypography.bodySmall.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // Tab 3: Property Listing Packages & Monetization Hub
+  // --------------------------------------------------------------------------
+  Widget _buildListingPackagesView(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+      children: [
+        // Intro & Current Active Plan Banner
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.cardColor,
+                isDark ? const Color(0xFF141C2B) : const Color(0xFFF3EFE8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.translate('packages_title'),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      l10n.translate('packages_subtitle'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Package 1: باقة الانطلاق (Starter Launch - 0 EGP)
+        _buildPackageCard(
+          id: 'starter',
+          title: l10n.translate('pkg_starter_title'),
+          price: l10n.translate('pkg_starter_price'),
+          badge: l10n.translate('pkg_starter_badge'),
+          isPopular: false,
+          accentColor: theme.colorScheme.secondary,
+          features: [
+            l10n.translate('pkg_starter_f1'),
+            l10n.translate('pkg_starter_f2'),
+          ],
+          l10n: l10n,
+        ),
+        const SizedBox(height: 14),
+
+        // Package 2: الباقة المميزة (Featured Plan - 750 EGP/mo)
+        _buildPackageCard(
+          id: 'featured',
+          title: l10n.translate('pkg_featured_title'),
+          price: l10n.translate('pkg_featured_price'),
+          badge: l10n.translate('pkg_featured_badge'),
+          isPopular: true,
+          accentColor: theme.colorScheme.primary,
+          features: [
+            l10n.translate('pkg_featured_f1'),
+            l10n.translate('pkg_featured_f2'),
+            l10n.translate('pkg_featured_f3'),
+            l10n.translate('pkg_featured_f4'),
+          ],
+          l10n: l10n,
+        ),
+        const SizedBox(height: 14),
+
+        // Package 3: باقة الشركات والوسطاء (Broker Pro - 2,500 EGP/mo)
+        _buildPackageCard(
+          id: 'broker',
+          title: l10n.translate('pkg_broker_title'),
+          price: l10n.translate('pkg_broker_price'),
+          badge: l10n.translate('pkg_broker_badge'),
+          isPopular: false,
+          accentColor: theme.colorScheme.primary,
+          features: [
+            l10n.translate('pkg_broker_f1'),
+            l10n.translate('pkg_broker_f2'),
+            l10n.translate('pkg_broker_f3'),
+            l10n.translate('pkg_broker_f4'),
+          ],
+          l10n: l10n,
+        ),
+        const SizedBox(height: 20),
+
+        // Upgrade Action Button
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: () {
+              _showUpgradeConfirmationSheet(context, _selectedPackageId, l10n);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
+              elevation: 4,
+              shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.bolt_rounded,
+                  size: 20,
+                  color: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _activePlanId == _selectedPackageId
+                      ? l10n.translate('active_plan')
+                      : l10n.translate('upgrade_package_now'),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPackageCard({
+    required String id,
+    required String title,
+    required String price,
+    required String badge,
+    required bool isPopular,
+    required Color accentColor,
+    required List<String> features,
+    required AppLocalizations l10n,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isSelected = _selectedPackageId == id;
+    final isActive = _activePlanId == id;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPackageId = id;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : (isPopular
+                    ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                    : theme.colorScheme.outlineVariant.withValues(
+                        alpha: isDark ? 0.2 : 0.6,
+                      )),
+            width: isSelected || isPopular ? 1.8 : 1.0,
+          ),
+          boxShadow: isPopular || isSelected
+              ? [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: Title, Badge, Selected Radio
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          isPopular
+                              ? Icons.star_rounded
+                              : (id == 'starter'
+                                  ? Icons.rocket_launch_outlined
+                                  : Icons.business_center_rounded),
+                          color: accentColor,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (isPopular)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                      ),
+                    ),
+                  )
+                else if (isActive)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.secondary,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      l10n.translate('active_plan'),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.secondary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Price Row - FittedBox to prevent any text truncation
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                price,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: isPopular
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.2 : 0.6,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Features Checkmarks
+            ...features.map((feature) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 15,
+                      color: isPopular
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        feature,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurface,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUpgradeConfirmationSheet(
+    BuildContext context,
+    String packageId,
+    AppLocalizations l10n,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final title = packageId == 'starter'
+        ? l10n.translate('pkg_starter_title')
+        : (packageId == 'featured'
+            ? l10n.translate('pkg_featured_title')
+            : l10n.translate('pkg_broker_title'));
+
+    final price = packageId == 'starter'
+        ? l10n.translate('pkg_starter_price')
+        : (packageId == 'featured'
+            ? l10n.translate('pkg_featured_price')
+            : l10n.translate('pkg_broker_price'));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 36,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.verified_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.translate('confirm_upgrade'),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: isDark ? 0.2 : 0.6,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l10n.translate('current_active_plan'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        Text(
+                          price,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(
+                      height: 20,
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: isDark ? 0.2 : 0.6,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.security_rounded,
+                          size: 16,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.isArabic
+                                ? 'الدفع يتم بالجنيه المصري (EGP) عبر بوابة الدفع الآمنة'
+                                : 'Billed in Egyptian Pounds (EGP) via encrypted gateway',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    setState(() {
+                      _activePlanId = packageId;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: theme.cardColor,
+                        content: Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                l10n.translate('package_upgraded_success'),
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    l10n.translate('confirm_upgrade'),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

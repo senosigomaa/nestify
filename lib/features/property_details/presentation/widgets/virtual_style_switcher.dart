@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:nestify/core/constants/app_colors.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 
 /// VirtualStyleSwitcher enables interactive generative previewing of
 /// different architectural interior aesthetics (Japandi, Cyberpunk, Scandinavian, Art Deco).
@@ -55,23 +56,62 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
     );
   }
 
+  String _getLocalizedStyleName(String styleName, AppLocalizations l10n) {
+    if (!l10n.isArabic) return styleName;
+    if (styleName.contains('Japandi')) return l10n.translate('style_japandi');
+    if (styleName.contains('Cyberpunk')) return l10n.translate('style_cyberpunk');
+    if (styleName.contains('Scandinavian')) return l10n.translate('style_scandinavian');
+    if (styleName.contains('Art Deco')) return l10n.translate('style_art_deco');
+    return styleName;
+  }
+
+  String _getLocalizedPalette(String styleName, bool isArabic) {
+    if (!isArabic) return _styleMeta[styleName]?['palette'] ?? '';
+    switch (styleName) {
+      case 'Minimalist Japandi':
+        return 'حجر الترافرتين • بلوط أبيض مدخن • ورق أرز ياباني';
+      case 'Cyberpunk Loft':
+        return 'ألياف الكربون • فولاذ صلب • إضاءة نيون هادئة';
+      case 'Warm Scandinavian':
+        return 'خشب البتولا النوردي • قماش بوكليه • أخضر ميرمية';
+      case 'Modern Art Deco':
+        return 'نحاس مصقول • مخمل زمردي فاخر • زجاج مضلع';
+      default:
+        return 'مواد معمارية مختارة بعناية';
+    }
+  }
+
+  String _getLocalizedLighting(String styleName, bool isArabic) {
+    if (!isArabic) return _styleMeta[styleName]?['lighting'] ?? '';
+    switch (styleName) {
+      case 'Minimalist Japandi':
+        return 'إضاءة عضوية دافئة 2700 كلفن';
+      case 'Cyberpunk Loft':
+        return 'إضاءة خلفية محيطية RGB قابلة للتعديل';
+      case 'Warm Scandinavian':
+        return 'ضوء نهاري ناعم 3000 كلفن';
+      case 'Modern Art Deco':
+        return 'كرات إضاءة فتيلية دافئة قابلة للتعتيم';
+      default:
+        return 'إضاءة محيطية طبيعية';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final activeImageUrl = widget.styleVariants[_selectedStyle] ?? '';
-    final meta = _styleMeta[_selectedStyle] ??
-        {
-          'icon': '🎨',
-          'palette': 'Curated Architectural Materials',
-          'lighting': 'Natural Ambient Illuminance',
-          'accent': '#00E5FF',
-        };
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkCard,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.borderLight,
+          color: theme.colorScheme.outlineVariant.withValues(
+            alpha: isDark ? 0.2 : 0.6,
+          ),
           width: 1,
         ),
       ),
@@ -80,33 +120,40 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.auto_awesome_rounded,
-                    color: AppColors.neonCyan,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Virtual Style Switcher',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        l10n.translate('virtual_style_title'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
-                'AI RENDERING',
+                l10n.translate('ai_rendering'),
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.neonCyan,
+                  color: theme.colorScheme.primary,
                   letterSpacing: 1,
                 ),
               ),
@@ -131,7 +178,7 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
                       children: [
                         Text(icon),
                         const SizedBox(width: 6),
-                        Text(styleName),
+                        Text(_getLocalizedStyleName(styleName, l10n)),
                       ],
                     ),
                     selected: isSelected,
@@ -142,20 +189,25 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
                         });
                       }
                     },
-                    selectedColor: AppColors.neonCyan.withValues(alpha: 0.18),
-                    backgroundColor: AppColors.surfaceDarkElevated,
+                    selectedColor:
+                        theme.colorScheme.primary.withValues(alpha: 0.18),
+                    backgroundColor: isDark
+                        ? const Color(0xFF141C2B)
+                        : const Color(0xFFEFECE6),
                     labelStyle: TextStyle(
                       fontSize: 12,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
-                          ? AppColors.neonCyan
-                          : AppColors.textSecondary,
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     side: BorderSide(
                       color: isSelected
-                          ? AppColors.neonCyan
-                          : Colors.white.withValues(alpha: 0.08),
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: isDark ? 0.2 : 0.6,
+                            ),
                       width: 1.2,
                     ),
                     shape: RoundedRectangleBorder(
@@ -174,8 +226,8 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
             child: Container(
               height: 220,
               width: double.infinity,
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundDark,
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
               ),
               child: Stack(
                 fit: StackFit.expand,
@@ -216,7 +268,7 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            meta['palette'] ?? '',
+                            _getLocalizedPalette(_selectedStyle, l10n.isArabic),
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -235,7 +287,7 @@ class _VirtualStyleSwitcherState extends State<VirtualStyleSwitcher> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                meta['lighting'] ?? '',
+                                _getLocalizedLighting(_selectedStyle, l10n.isArabic),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textSecondary,

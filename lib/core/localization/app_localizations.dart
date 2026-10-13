@@ -23,6 +23,96 @@ class AppLocalizations {
 
   bool get isArabic => locale.languageCode == 'ar';
 
+  /// Formats price using Eastern Arabic or Western digits and appropriate currency/cadence
+  String formatCurrency(
+    num amount, {
+    String? currencySymbol,
+    bool isMonthly = false,
+  }) {
+    return formatPrice(
+      amount,
+      currencySymbol: currencySymbol,
+      isArabic: isArabic,
+      isMonthly: isMonthly,
+    );
+  }
+
+  /// Static formatter utility supporting Arabic & Western numeral conversion
+  static String formatPrice(
+    num amount, {
+    String? currencySymbol,
+    bool isArabic = false,
+    bool isMonthly = false,
+  }) {
+    final int rounded = amount.round();
+    final str = rounded.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = str.length - 1; i >= 0; i--) {
+      buffer.write(str[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        buffer.write(isArabic ? '،' : ',');
+      }
+    }
+    String formatted = buffer.toString().split('').reversed.join('');
+    if (isArabic) {
+      const westernToArabicDigits = {
+        '0': '٠',
+        '1': '١',
+        '2': '٢',
+        '3': '٣',
+        '4': '٤',
+        '5': '٥',
+        '6': '٦',
+        '7': '٧',
+        '8': '٨',
+        '9': '٩',
+      };
+      final arabicDigits = StringBuffer();
+      for (int i = 0; i < formatted.length; i++) {
+        final char = formatted[i];
+        arabicDigits.write(westernToArabicDigits[char] ?? char);
+      }
+      formatted = arabicDigits.toString();
+      final sym = currencySymbol;
+      final symDisplay = (sym != null && sym != '\$' && sym.isNotEmpty)
+          ? (sym == 'EGP' ? 'ج.م' : sym)
+          : 'ج.م';
+      return isMonthly ? '$formatted $symDisplay / شهرياً' : '$formatted $symDisplay';
+    } else {
+      final sym = currencySymbol;
+      final symDisplay = (sym != null && sym != '\$' && sym.isNotEmpty)
+          ? (sym == 'ج.م' ? 'EGP' : sym)
+          : 'EGP';
+      return isMonthly ? '$formatted $symDisplay/mo' : '$formatted $symDisplay';
+    }
+  }
+
+  /// Converts western numeric strings to Eastern Arabic digits (e.g. "12.8" -> "١٢.٨")
+  static String convertToArabicDigits(dynamic input) {
+    final str = input.toString();
+    const westernToArabicDigits = {
+      '0': '٠',
+      '1': '١',
+      '2': '٢',
+      '3': '٣',
+      '4': '٤',
+      '5': '٥',
+      '6': '٦',
+      '7': '٧',
+      '8': '٨',
+      '9': '٩',
+      '.': '٫',
+    };
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      final char = str[i];
+      buffer.write(westernToArabicDigits[char] ?? char);
+    }
+    return buffer.toString();
+  }
+
   static final Map<String, Map<String, String>> _localizedValues = {
     'en': {
       // App branding
@@ -68,7 +158,9 @@ class AppLocalizations {
       // Marketplace Sections
       'section_for_sale': 'Featured Properties for Sale',
       'section_for_rent': 'Turnkey Luxury Rentals',
-      'section_hot_deals': 'Hot High-Yield Investment Deals',
+      'section_hot_deals': 'Prime Investment Opportunities (Highest Yield)',
+      'annual_roi_badge': 'Annual ROI',
+      'annual_roi': 'Annual ROI',
       'view_all': 'View All',
 
       // Property & Financial Specs
@@ -135,8 +227,44 @@ class AppLocalizations {
       'noon_preset': 'Noon (12:00)',
       'sunset_preset': 'Golden Hour (17:00)',
       'shadow_factor': 'Shadow',
+      'early_dawn': 'Early Dawn Light',
+      'morning_ambient': 'Morning Ambient Sunlight',
+      'midday_zenith': 'Direct Midday Zenith',
+      'afternoon_light': 'Warm Afternoon Illuminance',
+      'golden_hour': 'Golden Hour Radiance',
+      'sunset_twilight': 'Sunset / Twilight Hue',
       'virtual_style_title': 'Virtual Style Switcher',
       'ai_rendering': 'AI RENDERING',
+      'style_japandi': 'Minimalist Japandi',
+      'style_cyberpunk': 'Cyberpunk Loft',
+      'style_scandinavian': 'Warm Scandinavian',
+      'style_art_deco': 'Modern Art Deco',
+
+      // Vibe Radar Technical Metrics
+      'vibe_radar_title': 'NEIGHBORHOOD VIBE RADAR',
+      'ambient_acoustic': 'Ambient Acoustic Profiling',
+      'quiet_library': 'Whispering Library Quiet (Acoustic Glass)',
+      'serene_residential': 'Serene Residential Ambience',
+      'moderate_urban': 'Moderate Urban Activity',
+      'vibrant_pulse': 'Dynamic Vibrant City Pulse',
+      'specialty_coffee': 'Specialty Coffee',
+      'coffee_sub': 'Third-wave roasters on block',
+      'tech_commute': 'Tech Hub Commute',
+      'tech_commute_sub': 'Express metro & bike route',
+      'pet_friendly_metric': 'Pet Friendliness',
+      'pet_dog_park': 'Dog park within 250m',
+      'pet_restricted': 'Quiet zone regulations',
+      'digital_pipeline': 'Digital Pipeline',
+      'digital_fiber': 'Ultra-low latency fiber',
+      'walk_score': 'Walkability & Transit Score',
+      'green_canopy': 'Green Canopy & Parks',
+      'dining_nightlife': 'Boutique Dining & Nightlife',
+      'schedule_vibe_walk': 'Schedule Neighborhood Vibe Walk',
+      'vibe_walk_scheduled': 'Neighborhood Vibe Tour guide downloaded to your calendar!',
+      'mins_walk': 'm walk',
+      'mins': 'mins',
+      'index_pct': '% Index',
+      'restricted': 'Restricted',
 
       // Co-Living & Calculator
       'smart_split_title': 'Smart Split Calculator',
@@ -213,9 +341,37 @@ class AppLocalizations {
       'connect_partner': 'Connect & Join Group',
       'group_request_sent': 'Co-Investment group partnership request sent!',
 
-      // Portfolio
+      // Portfolio & Listing Packages
       'tab_saved': 'Saved Properties',
       'tab_tours': 'Scheduled Tours',
+      'tab_packages': 'Listing Packages',
+      'packages_title': 'Property Listing Packages',
+      'packages_subtitle': 'Boost exposure to over 500k active investors & VIP buyers',
+      'pkg_starter_title': 'Starter Launch',
+      'pkg_starter_price': 'Free - 0 EGP',
+      'pkg_starter_badge': 'FREE',
+      'pkg_starter_f1': '1 active listing for 30 days',
+      'pkg_starter_f2': 'Standard search results ranking',
+      'pkg_featured_title': 'Featured Plan',
+      'pkg_featured_price': '750 EGP / mo',
+      'pkg_featured_badge': 'MOST POPULAR',
+      'pkg_featured_f1': '5 featured active listings',
+      'pkg_featured_f2': 'Verified architecture gold badge',
+      'pkg_featured_f3': 'Top-of-homepage priority showcase',
+      'pkg_featured_f4': 'Direct WhatsApp lead connect',
+      'pkg_broker_title': 'Broker Pro (Agencies)',
+      'pkg_broker_price': '2,500 EGP / mo',
+      'pkg_broker_badge': 'BROKER PRO',
+      'pkg_broker_f1': 'Unlimited active listings',
+      'pkg_broker_f2': '360° virtual tours & spatial VR',
+      'pkg_broker_f3': 'Advanced leads dashboard & analytics',
+      'pkg_broker_f4': 'VIP support & dedicated account manager',
+      'upgrade_package_now': 'Upgrade Package Now',
+      'confirm_upgrade': 'Confirm Plan Upgrade',
+      'package_upgraded_success':
+          'Package upgraded successfully! Your premium benefits are active.',
+      'current_active_plan': 'Current Active Plan',
+      'active_plan': 'Active Plan',
       'tour_in': 'In',
       'days': 'Days',
       'chauffeur_assigned': 'VIP Chauffeur Assigned',
@@ -230,6 +386,10 @@ class AppLocalizations {
       'language_setting': 'App Language',
       'language_ar': 'العربية (Arabic)',
       'language_en': 'English',
+      'theme_setting': 'App Theme Aesthetic',
+      'theme_nordic_light': 'Nordic Minimalist (Ivory & Gold)',
+      'theme_obsidian_dark': 'Obsidian Dark (Luxury Slate)',
+      'theme_toggle_short': 'Nordic / Obsidian',
       'noise_tolerance': 'Max Ambient Noise Tolerance',
       'preferred_style': 'Preferred Design Aesthetic',
       'contact_concierge': 'Contact Private Wealth Concierge',
@@ -279,7 +439,9 @@ class AppLocalizations {
       // Marketplace Sections
       'section_for_sale': 'عقارات فاخرة للبيع',
       'section_for_rent': 'عقارات راقية للإيجار',
-      'section_hot_deals': 'صفقات استثمارية ساخنة (عائد > 11%)',
+      'section_hot_deals': 'فرص استثمارية مميزة (أعلى عائد إيجاري)',
+      'annual_roi_badge': 'عائد سنوي',
+      'annual_roi': 'عائد سنوي',
       'view_all': 'عرض الكل',
 
       // Property & Financial Specs
@@ -346,8 +508,44 @@ class AppLocalizations {
       'noon_preset': 'الظهيرة (12:00)',
       'sunset_preset': 'الساعة الذهبية (17:00)',
       'shadow_factor': 'الظل',
+      'early_dawn': 'ضوء الفجر الباكر',
+      'morning_ambient': 'شمس الصباح الهادئة',
+      'midday_zenith': 'شمس الظهيرة المباشرة',
+      'afternoon_light': 'إضاءة الظهيرة الدافئة',
+      'golden_hour': 'توهج الساعة الذهبية',
+      'sunset_twilight': 'شفق الغروب',
       'virtual_style_title': 'محاكي الطراز الافتراضي (ذكاء اصطناعي)',
       'ai_rendering': 'توليد ذكاء اصطناعي',
+      'style_japandi': 'طراز جاباندي التبسيطي',
+      'style_cyberpunk': 'طراز سايبربانك لوفت',
+      'style_scandinavian': 'طراز اسكندنافي دافئ',
+      'style_art_deco': 'طراز آرت ديكو حديث',
+
+      // Vibe Radar Technical Metrics
+      'vibe_radar_title': 'رادار الطابع المعيشي للحي',
+      'ambient_acoustic': 'قياس العزل الصوتي المحيط',
+      'quiet_library': 'هدوء يشبه المكتبات (زجاج عازل للصوت)',
+      'serene_residential': 'أجواء سكنية هادئة ومريحة',
+      'moderate_urban': 'نشاط حضري معتدل',
+      'vibrant_pulse': 'نبض المدينة الحيوي والنشط',
+      'specialty_coffee': 'المقاهي المختصة',
+      'coffee_sub': 'محامص بن مختصة في نفس الشارع',
+      'tech_commute': 'المسافة لمراكز الأعمال',
+      'tech_commute_sub': 'مسار مترو سريع ومسارات دراجات',
+      'pet_friendly_metric': 'ملائمة الحيوانات الأليفة',
+      'pet_dog_park': 'حديقة حيوانات أليفة على بُعد 250م',
+      'pet_restricted': 'ضوابط مناطق هادئة مقيدة',
+      'digital_pipeline': 'البنية التحتية الرقمية',
+      'digital_fiber': 'ألياف ضوئية فائقة السرعة واستجابة منخفضة',
+      'walk_score': 'مؤشر سهولة المشي والمواصلات',
+      'green_canopy': 'المساحات الخضراء والحدائق',
+      'dining_nightlife': 'المطاعم الفاخرة والحياة الترفيهية',
+      'schedule_vibe_walk': 'حجز جولة استكشافية للحي',
+      'vibe_walk_scheduled': 'تم تنزيل دليل جولة الحي الاستكشافية إلى تقويمك!',
+      'mins_walk': 'د مشياً',
+      'mins': 'دقيقة',
+      'index_pct': '٪ مؤشر',
+      'restricted': 'غير مسموح',
 
       // Co-Living & Calculator
       'smart_split_title': 'حاسبة التقسيم والاستثمار المشترك',
@@ -424,9 +622,38 @@ class AppLocalizations {
       'connect_partner': 'تواصل وانضم للمجموعة',
       'group_request_sent': 'تم إرسال طلب الانضمام لمجموعة الاستثمار المشترك!',
 
-      // Portfolio
+      // Portfolio & Listing Packages
       'tab_saved': 'العقارات المحفوظة',
       'tab_tours': 'الجولات المجدولة',
+      'tab_packages': 'باقات الإعلانات والنشر',
+      'packages_title': 'باقات الإعلانات والنشر',
+      'packages_subtitle':
+          'روّج لعقاراتك واصل لأكثر من ٥٠٠ ألف مشتري ومستثمر مهتم',
+      'pkg_starter_title': 'باقة الانطلاق (مجاناً)',
+      'pkg_starter_price': 'مجاناً - 0 ج.م',
+      'pkg_starter_badge': 'مجانية',
+      'pkg_starter_f1': 'إعلان واحد نشط لمدة ٣٠ يوماً',
+      'pkg_starter_f2': 'ظهور قياسي في نتائج البحث',
+      'pkg_featured_title': 'الباقة المميزة (الأكثر طلباً)',
+      'pkg_featured_price': '٧٥٠ ج.م / شهرياً',
+      'pkg_featured_badge': 'الأكثر طلباً',
+      'pkg_featured_f1': '٥ إعلانات مميزة نشطة',
+      'pkg_featured_f2': 'علامة "عقار موثق"',
+      'pkg_featured_f3': 'ظهور في صدارة الصفحة الرئيسية',
+      'pkg_featured_f4': 'تواصل مباشر عبر واتساب',
+      'pkg_broker_title': 'باقة الشركات والوسطاء (Broker Pro)',
+      'pkg_broker_price': '٢,٥٠٠ ج.م / شهرياً',
+      'pkg_broker_badge': 'الشركات',
+      'pkg_broker_f1': 'إعلانات غير محدودة',
+      'pkg_broker_f2': 'جولات افتراضية ٣٦٠° وتصوير مكاني',
+      'pkg_broker_f3': 'لوحة تحكم وإحصائيات ليدز متقدمة',
+      'pkg_broker_f4': 'دعم VIP ومستشار خاص على مدار الساعة',
+      'upgrade_package_now': 'ترقية الباقة الآن',
+      'confirm_upgrade': 'تأكيد ترقية الباقة',
+      'package_upgraded_success':
+          'تمت ترقية الباقة بنجاح! تم توسيع رصيد إعلاناتك ومميزات النشر.',
+      'current_active_plan': 'الباقة الحالية النشطة',
+      'active_plan': 'الباقة النشطة',
       'tour_in': 'خلال',
       'days': 'أيام',
       'chauffeur_assigned': 'تم تعيين السائق الخاص VIP',
@@ -441,6 +668,10 @@ class AppLocalizations {
       'language_setting': 'لغة التطبيق',
       'language_ar': 'العربية (RTL)',
       'language_en': 'English (الإنجليزية)',
+      'theme_setting': 'المظهر والتصميم',
+      'theme_nordic_light': 'فاتح فخم (نورديك)',
+      'theme_obsidian_dark': 'داكن فاخر (أوبسيديان)',
+      'theme_toggle_short': 'فاتح فخم / داكن',
       'noise_tolerance': 'الحد الأقصى المسموح للضوضاء',
       'preferred_style': 'الطراز المعماري المفضل',
       'contact_concierge': 'التواصل مع مستشار إدارة الثروات العقارية',

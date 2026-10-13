@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../localization/locale_bloc/locale_bloc.dart';
 import '../network/api_client.dart';
+import '../theme/theme_bloc/theme_bloc.dart';
 import '../../features/explore_feed/domain/repositories/property_repository.dart';
 import '../../features/explore_feed/data/repositories/property_repository_impl.dart';
 import '../../features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
@@ -15,6 +16,7 @@ Future<void> initDependencies() async {
   await Hive.initFlutter();
   final favoritesBox = await Hive.openBox('nestify_favorites');
   await Hive.openBox('nestify_settings');
+  await Hive.openBox('theme_box');
 
   // 2. Core Network
   sl.registerLazySingleton<ApiClient>(() => ApiClient());
@@ -38,5 +40,9 @@ Future<void> initDependencies() async {
 
   sl.registerFactory<LocaleBloc>(
     () => LocaleBloc(),
+  );
+
+  sl.registerFactory<ThemeBloc>(
+    () => ThemeBloc(),
   );
 }

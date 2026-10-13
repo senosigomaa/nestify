@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/constants/app_typography.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 import 'package:nestify/features/explore_feed/domain/entities/property_entity.dart';
 import 'package:nestify/features/explore_feed/presentation/widgets/match_score_badge.dart';
 
@@ -24,16 +25,17 @@ class VibeRadarSheet extends StatelessWidget {
     );
   }
 
-  String _getNoiseClassification(int db) {
-    if (db <= 35) return 'Whispering Library Quiet (Acoustic Glass)';
-    if (db <= 42) return 'Serene Residential Ambience';
-    if (db <= 50) return 'Moderate Urban Activity';
-    return 'Dynamic Vibrant City Pulse';
+  String _getNoiseClassification(int db, AppLocalizations l10n) {
+    if (db <= 35) return l10n.translate('quiet_library');
+    if (db <= 42) return l10n.translate('serene_residential');
+    if (db <= 50) return l10n.translate('moderate_urban');
+    return l10n.translate('vibrant_pulse');
   }
 
   @override
   Widget build(BuildContext context) {
-    final noiseLabel = _getNoiseClassification(property.noiseLevelDb);
+    final l10n = context.l10n;
+    final noiseLabel = _getNoiseClassification(property.noiseLevelDb, l10n);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -74,21 +76,25 @@ class VibeRadarSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.radar_rounded,
                               size: 18,
                               color: AppColors.neonCyan,
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              'NEIGHBORHOOD VIBE RADAR',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                                color: AppColors.neonCyan,
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                l10n.translate('vibe_radar_title'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                  color: AppColors.neonCyan,
+                                ),
                               ),
                             ),
                           ],
@@ -129,24 +135,31 @@ class VibeRadarSheet extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.graphic_eq_rounded,
-                              color: AppColors.neonCyan,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Ambient Acoustic Profiling',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.graphic_eq_rounded,
+                                color: AppColors.neonCyan,
+                                size: 18,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  l10n.translate('ambient_acoustic'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${property.noiseLevelDb} dB',
                           style: AppTypography.priceTag.copyWith(
@@ -200,9 +213,9 @@ class VibeRadarSheet extends StatelessWidget {
                     child: _buildMetricTile(
                       icon: Icons.coffee_rounded,
                       iconColor: AppColors.amberGold,
-                      title: 'Specialty Coffee',
-                      value: '${property.coffeeShopProximityMins}m walk',
-                      subtitle: 'Third-wave roasters on block',
+                      title: l10n.translate('specialty_coffee'),
+                      value: '${property.coffeeShopProximityMins} ${l10n.translate('mins_walk')}',
+                      subtitle: l10n.translate('coffee_sub'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -210,9 +223,9 @@ class VibeRadarSheet extends StatelessWidget {
                     child: _buildMetricTile(
                       icon: Icons.directions_subway_rounded,
                       iconColor: AppColors.neonCyan,
-                      title: 'Tech Hub Commute',
-                      value: '${property.commuteTechHubMins} mins',
-                      subtitle: 'Express metro & bike route',
+                      title: l10n.translate('tech_commute'),
+                      value: '${property.commuteTechHubMins} ${l10n.translate('mins')}',
+                      subtitle: l10n.translate('tech_commute_sub'),
                     ),
                   ),
                 ],
@@ -226,11 +239,13 @@ class VibeRadarSheet extends StatelessWidget {
                     child: _buildMetricTile(
                       icon: Icons.pets_rounded,
                       iconColor: const Color(0xFF69F0AE),
-                      title: 'Pet Friendliness',
-                      value: property.petFriendly ? '96% Index' : 'Restricted',
+                      title: l10n.translate('pet_friendly_metric'),
+                      value: property.petFriendly
+                          ? '96${l10n.translate('index_pct')}'
+                          : l10n.translate('restricted'),
                       subtitle: property.petFriendly
-                          ? 'Dog park within 250m'
-                          : 'Quiet zone regulations',
+                          ? l10n.translate('pet_dog_park')
+                          : l10n.translate('pet_restricted'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -238,9 +253,9 @@ class VibeRadarSheet extends StatelessWidget {
                     child: _buildMetricTile(
                       icon: Icons.wifi_tethering_rounded,
                       iconColor: AppColors.cyanVariant,
-                      title: 'Digital Pipeline',
-                      value: '10 Gbps',
-                      subtitle: 'Ultra-low latency fiber',
+                      title: l10n.translate('digital_pipeline'),
+                      value: l10n.isArabic ? '10 جيجابت' : '10 Gbps',
+                      subtitle: l10n.translate('digital_fiber'),
                     ),
                   ),
                 ],
@@ -249,19 +264,19 @@ class VibeRadarSheet extends StatelessWidget {
 
               // 4. Urban Lifestyle Radar Bars
               _buildProgressBar(
-                label: 'Walkability & Transit Score',
+                label: l10n.translate('walk_score'),
                 value: property.walkScore,
                 color: AppColors.neonCyan,
               ),
               const SizedBox(height: 10),
               _buildProgressBar(
-                label: 'Green Canopy & Parks',
+                label: l10n.translate('green_canopy'),
                 value: property.greenScore,
                 color: const Color(0xFF00E676),
               ),
               const SizedBox(height: 10),
               _buildProgressBar(
-                label: 'Boutique Dining & Nightlife',
+                label: l10n.translate('dining_nightlife'),
                 value: property.nightlifeScore,
                 color: AppColors.amberGold,
               ),
@@ -277,7 +292,7 @@ class VibeRadarSheet extends StatelessWidget {
                       SnackBar(
                         backgroundColor: AppColors.surfaceDarkElevated,
                         content: Text(
-                          'Neighborhood Vibe Tour guide downloaded to your calendar!',
+                          l10n.translate('vibe_walk_scheduled'),
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textPrimary,
                           ),
@@ -286,7 +301,7 @@ class VibeRadarSheet extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.explore_rounded, size: 18),
-                  label: const Text('Schedule Neighborhood Vibe Walk'),
+                  label: Text(l10n.translate('schedule_vibe_walk')),
                 ),
               ),
             ],

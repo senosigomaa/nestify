@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 
 /// Clean Architecture Domain Entity representing a property listing with
 /// commercial real estate attributes (developer, installments, 360 VR, rental yield).
@@ -74,10 +75,10 @@ class PropertyEntity extends Equatable {
     this.contactPhone = '+201009876543',
     this.contactWhatsApp = '+201009876543',
     this.category = 'apartment',
-    this.currencySymbol = '\$',
+    this.currencySymbol = 'EGP',
   });
 
-  /// Formatted price with commas (e.g. $1,450,000)
+  /// Formatted price with commas (e.g. 14,500,000 EGP)
   String get formattedPrice {
     final str = price.toInt().toString();
     final buffer = StringBuffer();
@@ -90,14 +91,36 @@ class PropertyEntity extends Equatable {
       }
     }
     final formatted = buffer.toString().split('').reversed.join('');
-    final sym = currencySymbol;
-    return priceType == 'rent' ? '$sym$formatted/mo' : '$sym$formatted';
+    final sym = currencySymbol == '\$' ? 'EGP' : currencySymbol;
+    return priceType == 'rent' ? '$formatted $sym/mo' : '$formatted $sym';
+  }
+
+  /// Formatted localized price supporting Arabic Eastern numerals
+  String localizedPrice(bool isArabic) {
+    return AppLocalizations.formatPrice(
+      price,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: priceType == 'rent',
+    );
   }
 
   /// Formatted Down payment
   String get formattedDownPayment {
     final effectiveDown = downPaymentPrice > 0 ? downPaymentPrice : price * 0.10;
-    return '\$${_formatNum(effectiveDown)}';
+    final sym = currencySymbol == '\$' ? 'EGP' : currencySymbol;
+    return '${_formatNum(effectiveDown)} $sym';
+  }
+
+  /// Formatted localized Down payment
+  String localizedDownPayment(bool isArabic) {
+    final effectiveDown = downPaymentPrice > 0 ? downPaymentPrice : price * 0.10;
+    return AppLocalizations.formatPrice(
+      effectiveDown,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
   }
 
   /// Formatted Monthly installment
@@ -105,7 +128,21 @@ class PropertyEntity extends Equatable {
     final effectiveMonthly = monthlyInstallmentPrice > 0
         ? monthlyInstallmentPrice
         : (price * 0.90) / (installmentYears * 12);
-    return '\$${_formatNum(effectiveMonthly)}/mo';
+    final sym = currencySymbol == '\$' ? 'EGP' : currencySymbol;
+    return '${_formatNum(effectiveMonthly)} $sym/mo';
+  }
+
+  /// Formatted localized Monthly installment
+  String localizedMonthlyInstallment(bool isArabic) {
+    final effectiveMonthly = monthlyInstallmentPrice > 0
+        ? monthlyInstallmentPrice
+        : (price * 0.90) / (installmentYears * 12);
+    return AppLocalizations.formatPrice(
+      effectiveMonthly,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: true,
+    );
   }
 
   String _formatNum(double numVal) {

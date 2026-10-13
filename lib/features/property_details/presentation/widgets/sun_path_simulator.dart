@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/constants/app_typography.dart';
+import 'package:nestify/core/localization/app_localizations.dart';
 
 /// SunPathSimulator simulates real-time solar illumination, shadow angles,
 /// and golden hour tints from 06:00 to 18:00 with dynamic lighting overlays.
@@ -24,22 +25,26 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
   // Time in 24-hour decimal format (e.g. 16.5 = 16:30 / 4:30 PM)
   double _timeHour = 16.5;
 
-  String _formatTime(double hour) {
+  String _formatTime(double hour, bool isArabic) {
     final int h = hour.floor();
     final int m = ((hour - h) * 60).round();
-    final period = h >= 12 ? 'PM' : 'AM';
+    final period = isArabic
+        ? (h >= 12 ? 'م' : 'ص')
+        : (h >= 12 ? 'PM' : 'AM');
     final displayHour = h > 12 ? h - 12 : (h == 0 ? 12 : h);
     final displayMin = m < 10 ? '0$m' : '$m';
-    return '$displayHour:$displayMin $period';
+    return isArabic
+        ? '$displayHour:$displayMin $period'
+        : '$displayHour:$displayMin $period';
   }
 
-  String _getTimePhase(double hour) {
-    if (hour < 8.0) return 'Early Dawn Light';
-    if (hour < 11.0) return 'Morning Ambient Sunlight';
-    if (hour < 14.0) return 'Direct Midday Zenith';
-    if (hour < 16.5) return 'Warm Afternoon Illuminance';
-    if (hour < 17.5) return 'Golden Hour Radiance';
-    return 'Sunset / Twilight Hue';
+  String _getTimePhase(double hour, AppLocalizations l10n) {
+    if (hour < 8.0) return l10n.translate('early_dawn');
+    if (hour < 11.0) return l10n.translate('morning_ambient');
+    if (hour < 14.0) return l10n.translate('midday_zenith');
+    if (hour < 16.5) return l10n.translate('afternoon_light');
+    if (hour < 17.5) return l10n.translate('golden_hour');
+    return l10n.translate('sunset_twilight');
   }
 
   Color _getSunOverlayColor(double hour) {
@@ -86,18 +91,24 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final overlayColor = _getSunOverlayColor(_timeHour);
-    final timeStr = _formatTime(_timeHour);
-    final phaseStr = _getTimePhase(_timeHour);
+    final timeStr = _formatTime(_timeHour, l10n.isArabic);
+    final phaseStr = _getTimePhase(_timeHour, l10n);
     final shadowMult = _getShadowFactor(_timeHour);
     final progress = ((_timeHour - 6.0) / 12.0).clamp(0.0, 1.0);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkCard,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.borderLight,
+          color: theme.colorScheme.outlineVariant.withValues(
+            alpha: isDark ? 0.2 : 0.6,
+          ),
           width: 1,
         ),
       ),
@@ -105,24 +116,28 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Header Wrap to eliminate the 7.6 PIXELS overflow error
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              const Row(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.wb_sunny_rounded,
-                    color: AppColors.amberGold,
+                    color: theme.colorScheme.primary,
                     size: 20,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'Sun-Path Simulator',
+                    l10n.translate('sun_path_title'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -138,6 +153,8 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
                 ),
                 child: Text(
                   widget.orientation,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -235,7 +252,7 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
                             ),
                           ),
                           child: Text(
-                            'Shadow ${shadowMult.toStringAsFixed(1)}x',
+                            '${l10n.translate('shadow_factor')} ${shadowMult.toStringAsFixed(1)}x',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -266,10 +283,12 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppColors.amberGold,
-                    thumbColor: AppColors.amberGold,
-                    overlayColor: AppColors.amberGlow,
-                    inactiveTrackColor: AppColors.surfaceDarkElevated,
+                    activeTrackColor: theme.colorScheme.primary,
+                    thumbColor: theme.colorScheme.primary,
+                    overlayColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    inactiveTrackColor: isDark
+                        ? const Color(0xFF141C2B)
+                        : const Color(0xFFEFECE6),
                     trackHeight: 5,
                   ),
                   child: Slider(
@@ -285,12 +304,12 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
                   ),
                 ),
               ),
-              const Text(
+              Text(
                 '18:00',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -298,19 +317,26 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
 
           // Quick Presets
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildPresetButton(
-                label: 'Morning (08:00)',
-                targetHour: 8.0,
+              Expanded(
+                child: _buildPresetButton(
+                  label: l10n.translate('morning_preset'),
+                  targetHour: 8.0,
+                ),
               ),
-              _buildPresetButton(
-                label: 'Noon (12:00)',
-                targetHour: 12.0,
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildPresetButton(
+                  label: l10n.translate('noon_preset'),
+                  targetHour: 12.0,
+                ),
               ),
-              _buildPresetButton(
-                label: 'Golden Hour (17:00)',
-                targetHour: 17.0,
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildPresetButton(
+                  label: l10n.translate('sunset_preset'),
+                  targetHour: 17.0,
+                ),
               ),
             ],
           ),
@@ -323,7 +349,10 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
     required String label,
     required double targetHour,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isSelected = (_timeHour - targetHour).abs() < 0.3;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -331,25 +360,33 @@ class _SunPathSimulatorState extends State<SunPathSimulator> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.amberGold.withValues(alpha: 0.2)
-              : AppColors.surfaceDarkElevated,
+              ? theme.colorScheme.primary.withValues(alpha: 0.2)
+              : (isDark ? const Color(0xFF141C2B) : const Color(0xFFEFECE6)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? AppColors.amberGold
-                : Colors.white.withValues(alpha: 0.08),
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.2 : 0.6,
+                  ),
             width: 1,
           ),
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: isSelected ? AppColors.amberGold : AppColors.textSecondary,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.65),
           ),
         ),
       ),

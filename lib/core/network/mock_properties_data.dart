@@ -40,7 +40,7 @@ class MockPropertiesData {
       'rentalYieldPct': 12.8,
       'hasVirtualTour360': true,
       'category': 'apartment',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+201002938471',
       'contactWhatsApp': '+201002938471',
       'amenities': [
@@ -96,7 +96,7 @@ class MockPropertiesData {
       'rentalYieldPct': 11.2,
       'hasVirtualTour360': true,
       'category': 'villa',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+201002938471',
       'contactWhatsApp': '+201002938471',
       'amenities': [
@@ -152,7 +152,7 @@ class MockPropertiesData {
       'rentalYieldPct': 13.4,
       'hasVirtualTour360': true,
       'category': 'apartment',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+971501234567',
       'contactWhatsApp': '+971501234567',
       'amenities': [
@@ -208,7 +208,7 @@ class MockPropertiesData {
       'rentalYieldPct': 13.8,
       'hasVirtualTour360': true,
       'category': 'townhouse',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+966501234567',
       'contactWhatsApp': '+966501234567',
       'amenities': [
@@ -264,7 +264,7 @@ class MockPropertiesData {
       'rentalYieldPct': 14.2,
       'hasVirtualTour360': true,
       'category': 'studio',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+201002938471',
       'contactWhatsApp': '+201002938471',
       'amenities': [
@@ -320,7 +320,7 @@ class MockPropertiesData {
       'rentalYieldPct': 12.1,
       'hasVirtualTour360': true,
       'category': 'townhouse',
-      'currencySymbol': '\$',
+      'currencySymbol': 'EGP',
       'contactPhone': '+201002938471',
       'contactWhatsApp': '+201002938471',
       'amenities': [
