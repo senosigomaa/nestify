@@ -21,9 +21,22 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
   // Step 1: Property Form Controllers & States
   String _transactionType = 'buy'; // 'buy' or 'rent'
   String _propertyType = 'apartment'; // 'apartment', 'villa', 'duplex', 'townhouse'
-  final TextEditingController _titleController = TextEditingController(
-    text: 'شقة فاخرة للبيع في كمبوند ماونتن فيو إي سيتي',
+  // Bilingual Title Controllers
+  final TextEditingController _titleArController = TextEditingController(
+    text: 'شقة فاخرة للبيع في التجمع الخامس (ماونتن فيو)',
   );
+  final TextEditingController _titleEnController = TextEditingController(
+    text: 'Luxury Apartment for Sale in New Cairo (Mountain View)',
+  );
+
+  // Bilingual Description Controllers
+  final TextEditingController _descArController = TextEditingController(
+    text: 'شقة بإطلالة مفتوحة على السنترال بارك، تشطيب ألترا سوبر لوكس، تتضمن جراج خاص ومصعد.',
+  );
+  final TextEditingController _descEnController = TextEditingController(
+    text: 'Prime view overlooking Central Park, ultra super lux finish with private parking and elevator.',
+  );
+
   final TextEditingController _compoundController = TextEditingController(
     text: 'Mountain View iCity',
   );
@@ -39,6 +52,12 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
   );
   int _installmentYears = 8;
   String _finishing = 'fully_finished'; // 'fully_finished', 'semi_finished', 'core_and_shell'
+  String _floor = 'الدور الثالث (Third Floor)';
+  bool _hasElevator = true;
+  final TextEditingController _advertiserNameController =
+      TextEditingController(text: 'ساري المنصور');
+  final TextEditingController _advertiserPhoneController =
+      TextEditingController(text: '+201206667376');
 
   // Mock uploaded photos
   final List<String> _uploadedImages = [
@@ -50,7 +69,8 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
   // Step 2: Listing Tier Selection
   String _selectedTier = 'featured'; // 'starter', 'featured', 'pro'
 
-  // Step 3: Card Details
+  // Step 3: Payment Method & Details
+  String _paymentMethod = 'card'; // 'card' or 'fawry'
   final TextEditingController _cardNumberController = TextEditingController(
     text: '5342 8920 1938 4242',
   );
@@ -68,11 +88,16 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
 
   @override
   void dispose() {
-    _titleController.dispose();
+    _titleArController.dispose();
+    _titleEnController.dispose();
+    _descArController.dispose();
+    _descEnController.dispose();
     _compoundController.dispose();
     _areaController.dispose();
     _totalPriceController.dispose();
     _downPaymentController.dispose();
+    _advertiserNameController.dispose();
+    _advertiserPhoneController.dispose();
     _cardNumberController.dispose();
     _cardHolderController.dispose();
     _cardExpiryController.dispose();
@@ -82,7 +107,8 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
 
   void _nextStep() {
     if (_currentStep == 0) {
-      if (_titleController.text.trim().isEmpty) {
+      if (_titleArController.text.trim().isEmpty &&
+          _titleEnController.text.trim().isEmpty) {
         _showToast('يرجى كتابة عنوان الإعلان');
         return;
       }
@@ -470,13 +496,32 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
         ),
         const SizedBox(height: 18),
 
-        // Title Input
+        // Title Input (Bilingual: Arabic & English)
+        Text(
+          l10n.isArabic ? 'عنوان الإعلان' : 'Property Title',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+          ),
+        ),
+        const SizedBox(height: 8),
         _buildTextField(
-          controller: _titleController,
-          label: l10n.isArabic ? 'عنوان الإعلان' : 'Listing Title',
+          controller: _titleArController,
+          label: l10n.isArabic ? 'عنوان الإعلان بالعربية' : 'Title in Arabic',
           hint: l10n.isArabic
-              ? 'مثال: شقة للبيع بموقع مميز بماونتن فيو إي سيتي'
-              : 'e.g. Luxury Apartment in Mountain View iCity',
+              ? 'مثال: شقة للبيع في التجمع الخامس'
+              : 'e.g. Apartment for sale in New Cairo',
+          textDirection: TextDirection.rtl,
+          theme: theme,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 10),
+        _buildTextField(
+          controller: _titleEnController,
+          label: l10n.isArabic ? 'Title in English (باللغة الإنجليزية)' : 'Title in English',
+          hint: 'e.g., Luxury Apartment for Sale in New Cairo',
+          textDirection: TextDirection.ltr,
           theme: theme,
           isDark: isDark,
         ),
@@ -804,6 +849,188 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 18),
+
+        // Floor & Elevator
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.isArabic ? 'الدور' : 'Floor Level',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _floor,
+                        isExpanded: true,
+                        dropdownColor: isDark ? const Color(0xFF1E2838) : Colors.white,
+                        items: [
+                          'الدور الأرضي (Ground Floor)',
+                          'الدور الأول (First Floor)',
+                          'الدور الثاني (Second Floor)',
+                          'الدور الثالث (Third Floor)',
+                          'الدور الرابع (Fourth Floor)',
+                          'الدور الأخير مع روف (Penthouse)',
+                        ].map((fl) => DropdownMenuItem(
+                          value: fl,
+                          child: Text(
+                            fl,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                            ),
+                          ),
+                        )).toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => _floor = val);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.isArabic ? 'المصعد (أسانسير)' : 'Elevator',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: () => setState(() => _hasElevator = !_hasElevator),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _hasElevator
+                            ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.12)
+                            : (isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA)),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _hasElevator
+                              ? theme.colorScheme.primary
+                              : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5)),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _hasElevator ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                            size: 16,
+                            color: _hasElevator ? theme.colorScheme.primary : const Color(0xFF94A3B8),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _hasElevator ? (l10n.isArabic ? 'متوفر' : 'Yes') : (l10n.isArabic ? 'لا يوجد' : 'No'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _hasElevator
+                                  ? theme.colorScheme.primary
+                                  : (isDark ? Colors.white : const Color(0xFF0F1B2B)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+
+        // Description Input (Bilingual: Arabic & English)
+        Text(
+          l10n.isArabic ? 'تفاصيل ووصف الإعلان' : 'Property Description',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          controller: _descArController,
+          label: l10n.isArabic
+              ? 'تفاصيل ووصف العقار بالعربية (المميزات، التشطيب، الخدمات)'
+              : 'Description in Arabic (Features, finishes, amenities)',
+          hint: l10n.isArabic
+              ? 'اكتب تفاصيل العقار، نوع التشطيب، الخدمات، والإطلالة...'
+              : 'Write property details, finishes, amenities, and views...',
+          textDirection: TextDirection.rtl,
+          maxLines: 3,
+          theme: theme,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 10),
+        _buildTextField(
+          controller: _descEnController,
+          label: l10n.isArabic
+              ? 'Description in English (الوصف بالإنجليزية)'
+              : 'Description in English (Key features, finishes, amenities)',
+          hint: 'Key features, finishes, compound amenities, views...',
+          textDirection: TextDirection.ltr,
+          maxLines: 3,
+          theme: theme,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 18),
+
+        // Advertiser Contact Information
+        Text(
+          l10n.isArabic ? 'بيانات التواصل للمعلن' : 'Advertiser Contact Info',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          controller: _advertiserNameController,
+          label: l10n.isArabic ? 'اسم المعلن / الوكيل' : 'Advertiser Name',
+          hint: 'ساري المنصور',
+          theme: theme,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _advertiserPhoneController,
+          label: l10n.isArabic ? 'رقم الهاتف للتواصل وواتساب' : 'Phone / WhatsApp',
+          hint: '+201206667376',
+          keyboardType: TextInputType.phone,
+          theme: theme,
+          isDark: isDark,
+        ),
       ],
     );
   }
@@ -923,59 +1150,265 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Visual Credit Card Preview
-        _buildVisualCardPreview(theme, isDark),
-        const SizedBox(height: 20),
-
-        // Card Inputs
-        _buildTextField(
-          controller: _cardNumberController,
-          label: l10n.isArabic ? 'رقم البطاقة (16 رقم)' : 'Card Number',
-          hint: '5342 8920 1938 4242',
-          keyboardType: TextInputType.number,
-          theme: theme,
-          isDark: isDark,
-          onChanged: (_) => setState(() {}),
+        // Payment Method Selector (Visa/Mastercard vs Fawry Pay)
+        Text(
+          l10n.isArabic ? 'طريقة السداد' : 'Payment Method',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+          ),
         ),
-        const SizedBox(height: 14),
-
-        _buildTextField(
-          controller: _cardHolderController,
-          label: l10n.isArabic ? 'اسم حامل البطاقة (بالإنجليزية)' : 'Cardholder Name',
-          hint: 'MOHAMED AHMED',
-          theme: theme,
-          isDark: isDark,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 14),
-
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: _buildTextField(
-                controller: _cardExpiryController,
-                label: l10n.isArabic ? 'تاريخ الانتهاء' : 'Expiry Date',
-                hint: '08/28',
-                theme: theme,
-                isDark: isDark,
-                onChanged: (_) => setState(() {}),
+              child: GestureDetector(
+                onTap: () => setState(() => _paymentMethod = 'card'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _paymentMethod == 'card'
+                        ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.12)
+                        : (isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _paymentMethod == 'card'
+                          ? primaryColor
+                          : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5)),
+                      width: _paymentMethod == 'card' ? 1.6 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.credit_card_rounded,
+                          size: 18,
+                          color: _paymentMethod == 'card'
+                              ? primaryColor
+                              : (isDark ? AppColors.textSecondary : const Color(0xFF64748B))),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.isArabic ? 'بطاقة بنكية / فيزا' : 'Visa / MasterCard',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: _paymentMethod == 'card' ? FontWeight.w800 : FontWeight.w600,
+                          color: _paymentMethod == 'card'
+                              ? primaryColor
+                              : (isDark ? Colors.white : const Color(0xFF0F1B2B)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
-              child: _buildTextField(
-                controller: _cardCvvController,
-                label: 'CVV',
-                hint: '892',
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                theme: theme,
-                isDark: isDark,
+              child: GestureDetector(
+                onTap: () => setState(() => _paymentMethod = 'fawry'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _paymentMethod == 'fawry'
+                        ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.12)
+                        : (isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _paymentMethod == 'fawry'
+                          ? const Color(0xFFF59E0B)
+                          : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5)),
+                      width: _paymentMethod == 'fawry' ? 1.6 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.receipt_long_rounded,
+                          size: 18, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.isArabic ? 'فوري باي (Fawry)' : 'Fawry Pay',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: _paymentMethod == 'fawry' ? FontWeight.w800 : FontWeight.w600,
+                          color: _paymentMethod == 'fawry'
+                              ? const Color(0xFFF59E0B)
+                              : (isDark ? Colors.white : const Color(0xFF0F1B2B)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
+
+        if (_paymentMethod == 'card') ...[
+          // Visual Credit Card Preview
+          _buildVisualCardPreview(theme, isDark),
+          const SizedBox(height: 20),
+
+          // Card Inputs
+          _buildTextField(
+            controller: _cardNumberController,
+            label: l10n.isArabic ? 'رقم البطاقة (16 رقم)' : 'Card Number',
+            hint: '5342 8920 1938 4242',
+            keyboardType: TextInputType.number,
+            theme: theme,
+            isDark: isDark,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 14),
+
+          _buildTextField(
+            controller: _cardHolderController,
+            label: l10n.isArabic ? 'اسم حامل البطاقة (بالإنجليزية)' : 'Cardholder Name',
+            hint: 'MOHAMED AHMED',
+            theme: theme,
+            isDark: isDark,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _cardExpiryController,
+                  label: l10n.isArabic ? 'تاريخ الانتهاء' : 'Expiry Date',
+                  hint: '08/28',
+                  theme: theme,
+                  isDark: isDark,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  controller: _cardCvvController,
+                  label: 'CVV',
+                  hint: '892',
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  theme: theme,
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ] else ...[
+          // FAWRY PAY CODE CONTAINER
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [
+                        const Color(0xFF2C2415),
+                        const Color(0xFF1E1A14),
+                      ]
+                    : [
+                        const Color(0xFFFFFBEB),
+                        Colors.white,
+                      ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.qr_code_2_rounded,
+                              color: Color(0xFFF59E0B), size: 24),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.isArabic ? 'كود الدفع المرجعي لفوري' : 'Fawry Reference Code',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                              ),
+                            ),
+                            Text(
+                              l10n.isArabic ? 'صالح لمدة ٤٨ ساعة' : 'Valid for 48 Hours',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFFF59E0B),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Icon(Icons.copy_rounded, size: 18, color: Color(0xFFF59E0B)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF3F0EA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Text(
+                        '948  210  57',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                          color: Color(0xFFF59E0B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.isArabic
+                      ? 'يمكنك التوجه لأي منفذ فوري، أو الدفع مباشرة عبر تطبيق MyFawry أو المحافظ الإلكترونية وإنستاباي لتفعيل الإعلان فورياً.'
+                      : 'Pay at any Fawry retail outlet, or through MyFawry app / E-wallets / InstaPay for instant publishing.',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    height: 1.4,
+                    color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // Security Badge
         Container(
@@ -1360,6 +1793,8 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     ValueChanged<String>? onChanged,
+    TextDirection? textDirection,
+    int maxLines = 1,
     required ThemeData theme,
     required bool isDark,
   }) {
@@ -1388,6 +1823,8 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
             keyboardType: keyboardType,
             obscureText: obscureText,
             onChanged: onChanged,
+            textDirection: textDirection,
+            maxLines: maxLines,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -1395,6 +1832,7 @@ class _AddPropertyListingScreenState extends State<AddPropertyListingScreen> {
             ),
             decoration: InputDecoration(
               hintText: hint,
+              hintTextDirection: textDirection,
               hintStyle: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),

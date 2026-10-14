@@ -10,7 +10,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   final Box? themeBox;
 
   ThemeBloc({this.themeBox})
-      : super(const ThemeState(themeMode: ThemeMode.dark)) {
+      : super(const ThemeState(themeMode: ThemeMode.light)) {
     on<LoadSavedThemeEvent>(_onLoadSavedTheme);
     on<ToggleThemeEvent>(_onToggleTheme);
     on<SetThemeEvent>(_onSetTheme);
@@ -33,12 +33,12 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     try {
       final box = _getBox();
       if (box != null) {
-        final isDark = box.get(keyIsDark, defaultValue: true) as bool;
+        final isDark = box.get(keyIsDark, defaultValue: false) as bool;
         emit(ThemeState(themeMode: isDark ? ThemeMode.dark : ThemeMode.light));
         return;
       }
     } catch (_) {}
-    emit(const ThemeState(themeMode: ThemeMode.dark));
+    emit(const ThemeState(themeMode: ThemeMode.light));
   }
 
   Future<void> _onToggleTheme(

@@ -132,9 +132,33 @@ class PropertyEntity extends Equatable {
     );
   }
 
+  /// Safe Math Guard for calculating monthly installment
+  static int calculateInstallment({
+    required double price,
+    required int years,
+    double downPaymentRatio = 0.10,
+  }) {
+    if (years <= 0 || price <= 0 || price.isNaN || price.isInfinite) return 0;
+    final remaining = price * (1.0 - downPaymentRatio);
+    final result = remaining / (years * 12);
+    if (result.isNaN || result.isInfinite) return 0;
+    return result.toInt();
+  }
+
+  /// Safe monthly installment value
+  double get monthlyInstallmentValue {
+    if (monthlyInstallmentPrice > 0) return monthlyInstallmentPrice;
+    if (installmentYears <= 0 || price <= 0 || price.isNaN || price.isInfinite) {
+      return 0.0;
+    }
+    final val = (price * 0.90) / (installmentYears * 12);
+    return (val.isFinite && !val.isNaN && val > 0) ? val : 0.0;
+  }
+
   /// Formatted price with commas (e.g. 14,500,000 EGP)
   String get formattedPrice {
-    final str = price.toInt().toString();
+    final intVal = price.isFinite && !price.isNaN && price > 0 ? price.toInt() : 0;
+    final str = intVal.toString();
     final buffer = StringBuffer();
     int count = 0;
     for (int i = str.length - 1; i >= 0; i--) {
@@ -152,7 +176,7 @@ class PropertyEntity extends Equatable {
   /// Formatted localized price supporting Arabic Eastern numerals
   String localizedPrice(bool isArabic) {
     return AppLocalizations.formatPrice(
-      price,
+      price.isFinite && !price.isNaN ? price : 0.0,
       currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
       isArabic: isArabic,
       isMonthly: priceType == 'rent',
@@ -161,14 +185,18 @@ class PropertyEntity extends Equatable {
 
   /// Formatted Down payment
   String get formattedDownPayment {
-    final effectiveDown = downPaymentPrice > 0 ? downPaymentPrice : price * 0.10;
+    final effectiveDown = downPaymentPrice > 0
+        ? downPaymentPrice
+        : (price.isFinite && !price.isNaN ? price * 0.10 : 0.0);
     final sym = currencySymbol == '\$' ? 'EGP' : currencySymbol;
     return '${_formatNum(effectiveDown)} $sym';
   }
 
   /// Formatted localized Down payment
   String localizedDownPayment(bool isArabic) {
-    final effectiveDown = downPaymentPrice > 0 ? downPaymentPrice : price * 0.10;
+    final effectiveDown = downPaymentPrice > 0
+        ? downPaymentPrice
+        : (price.isFinite && !price.isNaN ? price * 0.10 : 0.0);
     return AppLocalizations.formatPrice(
       effectiveDown,
       currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
@@ -179,20 +207,15 @@ class PropertyEntity extends Equatable {
 
   /// Formatted Monthly installment
   String get formattedMonthlyInstallment {
-    final effectiveMonthly = monthlyInstallmentPrice > 0
-        ? monthlyInstallmentPrice
-        : (price * 0.90) / (installmentYears * 12);
+    final effectiveMonthly = monthlyInstallmentValue;
     final sym = currencySymbol == '\$' ? 'EGP' : currencySymbol;
     return '${_formatNum(effectiveMonthly)} $sym/mo';
   }
 
   /// Formatted localized Monthly installment
   String localizedMonthlyInstallment(bool isArabic) {
-    final effectiveMonthly = monthlyInstallmentPrice > 0
-        ? monthlyInstallmentPrice
-        : (price * 0.90) / (installmentYears * 12);
     return AppLocalizations.formatPrice(
-      effectiveMonthly,
+      monthlyInstallmentValue,
       currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
       isArabic: isArabic,
       isMonthly: true,
@@ -201,10 +224,7 @@ class PropertyEntity extends Equatable {
 
   /// Quarterly installment amount
   double get quarterlyInstallmentPrice {
-    final effectiveMonthly = monthlyInstallmentPrice > 0
-        ? monthlyInstallmentPrice
-        : (price * 0.90) / (installmentYears * 12);
-    return effectiveMonthly * 3;
+    return monthlyInstallmentValue * 3;
   }
 
   /// Formatted localized Quarterly installment
@@ -218,7 +238,9 @@ class PropertyEntity extends Equatable {
   }
 
   /// Cash price after upfront discount
-  double get cashPrice => price * (1.0 - (cashDiscountPercent / 100.0));
+  double get cashPrice => (price.isFinite && !price.isNaN)
+      ? price * (1.0 - (cashDiscountPercent / 100.0))
+      : 0.0;
 
   /// Formatted localized Cash Price
   String localizedCashPrice(bool isArabic) {
@@ -263,18 +285,22 @@ class PropertyEntity extends Equatable {
 
   /// Localized maintenance deposit
   String localizedMaintenance(bool isArabic) {
-    final pct = (maintenanceRatio * 100).toInt();
-    final amount = price * maintenanceRatio;
+    final ratio = maintenanceRatio.isFinite && !maintenanceRatio.isNaN
+        ? maintenanceRatio
+        : 0.08;
+    final pct = (ratio * 100).isFinite ? (ratio * 100).toInt() : 8;
+    final amount = price.isFinite && !price.isNaN ? price * ratio : 0.0;
     final formattedAmt = AppLocalizations.formatPrice(
       amount,
       currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
       isArabic: isArabic,
       isMonthly: false,
     );
-    return isArabic ? '$pct% ($formattedAmt)' : '$pct% ($formattedAmt)';
+    return '$pct% ($formattedAmt)';
   }
 
   String _formatNum(double numVal) {
+    if (!numVal.isFinite || numVal.isNaN || numVal <= 0) return '0';
     final str = numVal.toInt().toString();
     final buffer = StringBuffer();
     int count = 0;
@@ -289,13 +315,17 @@ class PropertyEntity extends Equatable {
   }
 
   /// Area in Square Meters (Sqm)
-  int get areaSqm => (squareFeet * 0.092903).round();
+  int get areaSqm => (squareFeet.isFinite && squareFeet > 0)
+      ? (squareFeet * 0.092903).round()
+      : 0;
 
   /// Price per square foot calculation
-  double get pricePerSqFt => squareFeet > 0 ? price / squareFeet : 0.0;
+  double get pricePerSqFt =>
+      squareFeet > 0 && price.isFinite && !price.isNaN ? price / squareFeet : 0.0;
 
   /// Price per square meter calculation
-  double get pricePerSqm => areaSqm > 0 ? price / areaSqm : 0.0;
+  double get pricePerSqm =>
+      areaSqm > 0 && price.isFinite && !price.isNaN ? price / areaSqm : 0.0;
 
   @override
   List<Object?> get props => [

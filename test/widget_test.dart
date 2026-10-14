@@ -87,17 +87,10 @@ void main() {
       await bloc.close();
     });
 
-    test('ThemeBloc toggles between Dark luxury and Nordic Minimalist light mode', () async {
+    test('ThemeBloc toggles between Nordic Light and Dark luxury mode', () async {
       final themeBloc = ThemeBloc();
-      expect(themeBloc.state.isDark, isTrue);
-      expect(themeBloc.state.themeMode, ThemeMode.dark);
-
-      themeBloc.add(const ToggleThemeEvent());
-      await expectLater(
-        themeBloc.stream,
-        emits(predicate((s) => !themeBloc.state.isDark && themeBloc.state.themeMode == ThemeMode.light)),
-      );
       expect(themeBloc.state.isDark, isFalse);
+      expect(themeBloc.state.themeMode, ThemeMode.light);
 
       themeBloc.add(const ToggleThemeEvent());
       await expectLater(
@@ -105,6 +98,13 @@ void main() {
         emits(predicate((s) => themeBloc.state.isDark && themeBloc.state.themeMode == ThemeMode.dark)),
       );
       expect(themeBloc.state.isDark, isTrue);
+
+      themeBloc.add(const ToggleThemeEvent());
+      await expectLater(
+        themeBloc.stream,
+        emits(predicate((s) => !themeBloc.state.isDark && themeBloc.state.themeMode == ThemeMode.light)),
+      );
+      expect(themeBloc.state.isDark, isFalse);
 
       await themeBloc.close();
     });

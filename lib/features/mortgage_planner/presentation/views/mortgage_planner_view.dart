@@ -117,19 +117,23 @@ class _EgyptianMortgagePlannerViewState extends State<EgyptianMortgagePlannerVie
     final remainingPrincipal = _propertyPrice - downPaymentAmount;
 
     double monthlyPayment;
-    if (_financingMode == 0) {
+    final totalMonths = _years * 12;
+    if (totalMonths <= 0) {
+      monthlyPayment = 0.0;
+    } else if (_financingMode == 0) {
       // Direct Developer: 0% Interest (Equal Installments)
-      final totalMonths = _years * 12;
       monthlyPayment = remainingPrincipal / totalMonths;
     } else {
       // CBE Mortgage Initiative (approx 8% annual diminishing rate)
-      final totalMonths = _years * 12;
       const annualRate = 0.08;
       final monthlyRate = annualRate / 12.0;
       monthlyPayment = (remainingPrincipal *
               monthlyRate *
               (1.0 + (monthlyRate * totalMonths))) /
           totalMonths;
+    }
+    if (!monthlyPayment.isFinite || monthlyPayment.isNaN || monthlyPayment < 0) {
+      monthlyPayment = 0.0;
     }
 
     final quarterlyPayment = monthlyPayment * 3;

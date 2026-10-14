@@ -44,7 +44,17 @@ class AppLocalizations {
     bool isArabic = false,
     bool isMonthly = false,
   }) {
-    final int rounded = amount.round();
+    if (amount.isNaN || amount.isInfinite || amount <= 0) {
+      final zeroStr = isArabic ? '٠' : '0';
+      final sym = currencySymbol;
+      final symDisplay = (sym != null && sym != '\$' && sym.isNotEmpty)
+          ? (sym == 'EGP' ? (isArabic ? 'ج.م' : 'EGP') : sym)
+          : (isArabic ? 'ج.م' : 'EGP');
+      return isMonthly
+          ? (isArabic ? '$zeroStr $symDisplay / شهرياً' : '$zeroStr $symDisplay/mo')
+          : '$zeroStr $symDisplay';
+    }
+    final int rounded = amount.isFinite ? amount.round() : 0;
     final str = rounded.toString();
     final buffer = StringBuffer();
     int count = 0;
@@ -123,10 +133,26 @@ class AppLocalizations {
       'nav_marketplace': 'Marketplace',
       'nav_explore': 'Discover',
       'nav_map': 'Map & Radar',
+      'nav_add_property': 'Add Listing',
+      'nav_chats': 'Chats',
       'nav_coliving': 'Installments',
       'nav_mortgage_planner': 'Installments',
       'nav_portfolio': 'Portfolio',
       'nav_profile': 'Profile',
+      'my_saved_properties': 'Saved Properties',
+      'saved_properties_count': 'saved properties',
+      'my_published_listings': 'My Published Listings',
+      'contact_support': 'Support & Concierge',
+      'privacy_policy': 'Terms & Privacy Policy',
+      'client_name': 'Client Name',
+      'phone_number': 'Phone Number',
+      'inspection_notes': 'Inspection Notes',
+      'confirm_tour_and_chat': 'Confirm Tour & Start Chat',
+      'fawry_pay': 'Fawry Pay',
+      'visa_mastercard': 'Credit / Debit Card',
+      'chat_title': 'In-App Messages',
+      'type_a_message': 'Write a message...',
+      'online_now': 'Online Now',
 
       // Egyptian Real Estate Marketplace & Mortgage Planner Keys
       'mortgage_planner_title': 'Mortgage & Installments Planner',
@@ -442,10 +468,26 @@ class AppLocalizations {
       'nav_marketplace': 'السوق العقاري',
       'nav_explore': 'اكتشف',
       'nav_map': 'الخريطة والرادار',
+      'nav_add_property': 'أضف عقارك',
+      'nav_chats': 'المحادثات',
       'nav_coliving': 'حاسبة الأقساط',
       'nav_mortgage_planner': 'حاسبة الأقساط',
       'nav_portfolio': 'المحفظة',
       'nav_profile': 'حسابي',
+      'my_saved_properties': 'عقاراتي المفضلة',
+      'saved_properties_count': 'عقارات محفوظة',
+      'my_published_listings': 'إعلاناتي المنشورة',
+      'contact_support': 'الدعم وخدمة العملاء',
+      'privacy_policy': 'الشروط وسياسة الخصوصية',
+      'client_name': 'اسم العميل',
+      'phone_number': 'رقم الهاتف للتواصل',
+      'inspection_notes': 'ملاحظات المعاينة',
+      'confirm_tour_and_chat': 'تأكيد طلب المعاينة وبدء المحادثة',
+      'fawry_pay': 'فوري باي (Fawry)',
+      'visa_mastercard': 'البطاقة البنكية (Visa / MasterCard)',
+      'chat_title': 'المحادثات العقارية',
+      'type_a_message': 'اكتب استفسارك هنا...',
+      'online_now': 'متصل الآن',
 
       // مصطلحات السوق العقاري المصري وحاسبة التمويل
       'mortgage_planner_title': 'حاسبة الأقساط والتمويل العقاري',

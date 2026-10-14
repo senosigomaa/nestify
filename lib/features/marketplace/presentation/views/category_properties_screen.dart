@@ -128,18 +128,30 @@ class _CategoryPropertiesScreenState extends State<CategoryPropertiesScreen> {
     if (widget.customTitle != null) return widget.customTitle!;
     switch (widget.categoryKey) {
       case 'apartments_sale':
-        return l10n.isArabic ? 'شقق للبيع' : 'Apartments for Sale';
+        return l10n.isArabic
+            ? 'شقق للبيع في التجمع والشيخ زايد'
+            : 'Apartments for Sale in New Cairo & Zayed';
       case 'apartments_rent':
-        return l10n.isArabic ? 'شقق للإيجار' : 'Apartments for Rent';
+        return l10n.isArabic
+            ? 'شقق وفلل للإيجار المفروش'
+            : 'Furnished Apartments & Villas for Rent';
       case 'villas_sale':
-        return l10n.isArabic ? 'فلل للبيع' : 'Villas for Sale';
+        return l10n.isArabic
+            ? 'فلل مستقلة وقصور للبيع بالتسهيلات'
+            : 'Standalone Luxury Villas for Sale';
       case 'villas_rent':
-        return l10n.isArabic ? 'فلل للإيجار' : 'Villas for Rent';
+        return l10n.isArabic
+            ? 'فلل فاخرة للإيجار السكني والدبلوماسي'
+            : 'Luxury Villas for Executive Lease';
       case 'townhouses_sale':
-        return l10n.isArabic ? 'تاون هاوس للبيع' : 'Townhouses for Sale';
+        return l10n.isArabic
+            ? 'تاون هاوس وتوين هاوس للبيع'
+            : 'Townhouses & Twin Houses for Sale';
       case 'all':
       default:
-        return l10n.isArabic ? 'جميع العقارات' : 'All Properties';
+        return l10n.isArabic
+            ? 'جميع العقارات والوحدات المتاحة'
+            : 'All Available Properties';
     }
   }
 

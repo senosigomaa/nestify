@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/property_entity.dart';
 import '../../domain/repositories/property_repository.dart';
 import 'explore_feed_event.dart';
 import 'explore_feed_state.dart';
@@ -16,6 +17,7 @@ class ExploreFeedBloc extends Bloc<ExploreFeedEvent, ExploreFeedState> {
     on<ResetFeedDeckEvent>(_onResetFeedDeck);
     on<BookTourRequestedEvent>(_onBookTourRequested);
     on<FilterNeighborhoodEvent>(_onFilterNeighborhood);
+    on<ToggleSavePropertyEvent>(_onToggleSaveProperty);
   }
 
   Future<void> _onLoadExploreFeed(
@@ -188,6 +190,29 @@ class ExploreFeedBloc extends Bloc<ExploreFeedEvent, ExploreFeedState> {
           selectedNeighborhood: event.neighborhood,
         ),
       );
+    }
+  }
+
+  Future<void> _onToggleSaveProperty(
+    ToggleSavePropertyEvent event,
+    Emitter<ExploreFeedState> emit,
+  ) async {
+    final isAlreadySaved =
+        state.savedProperties.any((p) => p.id == event.property.id);
+    final updatedSaved = List<PropertyEntity>.from(state.savedProperties);
+
+    if (isAlreadySaved) {
+      updatedSaved.removeWhere((p) => p.id == event.property.id);
+      emit(state.copyWith(savedProperties: updatedSaved));
+      try {
+        await repository.removeSavedProperty(event.property.id);
+      } catch (_) {}
+    } else {
+      updatedSaved.add(event.property);
+      emit(state.copyWith(savedProperties: updatedSaved));
+      try {
+        await repository.saveProperty(event.property);
+      } catch (_) {}
     }
   }
 }

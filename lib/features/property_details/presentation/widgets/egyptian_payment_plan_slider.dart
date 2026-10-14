@@ -50,7 +50,9 @@ class _EgyptianPaymentPlanSliderState extends State<EgyptianPaymentPlanSlider> {
     final downPaymentAmount = widget.propertyPrice * (_downPaymentPct / 100.0);
     final remainingAmount = widget.propertyPrice - downPaymentAmount;
     final totalMonths = _years * 12;
-    final monthlyInstallment = remainingAmount / totalMonths;
+    final monthlyInstallment = (totalMonths > 0 && remainingAmount.isFinite && !remainingAmount.isNaN)
+        ? remainingAmount / totalMonths
+        : 0.0;
     final quarterlyInstallment = monthlyInstallment * 3;
     final maintenanceDeposit = widget.propertyPrice * widget.maintenancePct;
     final cashSavings = widget.propertyPrice * (widget.cashDiscountPct / 100.0);

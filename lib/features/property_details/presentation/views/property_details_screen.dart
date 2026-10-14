@@ -5,11 +5,11 @@ import 'package:nestify/core/constants/app_typography.dart';
 import 'package:nestify/features/explore_feed/domain/entities/property_entity.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_event.dart';
+import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
 import 'package:nestify/features/explore_feed/presentation/widgets/match_score_badge.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
 import 'package:nestify/features/marketplace/presentation/widgets/direct_connect_buttons.dart';
 import '../widgets/egyptian_payment_plan_slider.dart';
-import '../widgets/sun_path_simulator.dart';
 import '../widgets/investment_roi_calculator.dart';
 import '../widgets/interactive_booking_sheet.dart';
 
@@ -30,6 +30,7 @@ class PropertyDetailsScreen extends StatefulWidget {
 
 class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   int _heroPhotoIndex = 0;
+  int _mediaTab = 0; // 0: Floor Plan (المخطط المعماري), 1: Photos (صور الوحدة)
   final PageController _pageController = PageController();
 
   void _showBookingDialog(BuildContext context) {
@@ -166,24 +167,44 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                   isLarge: true,
                                 ),
                                 const SizedBox(width: 8),
-                                _buildFloatingIconButton(
-                                  icon: Icons.favorite_rounded,
-                                  color: theme.colorScheme.primary,
-                                  onTap: () {
-                                    context
-                                        .read<ExploreFeedBloc>()
-                                        .add(SwipeRightEvent(property));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor: theme.cardColor,
-                                        content: Text(
-                                          'Saved to your Nestify portfolio!',
-                                          style: TextStyle(
-                                            color: theme.colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
+                                BlocBuilder<ExploreFeedBloc, ExploreFeedState>(
+                                  builder: (context, feedState) {
+                                    final isSaved = feedState.savedProperties
+                                        .any((p) => p.id == property.id);
+                                    return _buildFloatingIconButton(
+                                      icon: isSaved
+                                          ? Icons.favorite_rounded
+                                          : Icons.favorite_border_rounded,
+                                      color: isSaved
+                                          ? const Color(0xFFE11D48)
+                                          : (isDark
+                                              ? Colors.white
+                                              : const Color(0xFF64748B)),
+                                      onTap: () {
+                                        context.read<ExploreFeedBloc>().add(
+                                              ToggleSavePropertyEvent(property),
+                                            );
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            backgroundColor: theme.cardColor,
+                                            duration:
+                                                const Duration(milliseconds: 900),
+                                            content: Text(
+                                              isSaved
+                                                  ? (l10n.isArabic
+                                                      ? 'تمت الإزالة من المفضلة'
+                                                      : 'Removed from saved properties')
+                                                  : (l10n.isArabic
+                                                      ? 'تم الحفظ في عقاراتي المفضلة'
+                                                      : 'Saved to favorites!'),
+                                              style: TextStyle(
+                                                color: theme.colorScheme.primary,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
+                                        );
+                                      },
                                     );
                                   },
                                 ),
@@ -230,36 +251,56 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Price & Per Sq Ft / Rent Note
+                      // Price & Per Sq Ft / Rent Note (Zero overflow on all screen sizes)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            property.localizedPrice(l10n.isArabic),
-                            style: AppTypography.priceTag.copyWith(
-                              fontSize: 32,
-                              color: theme.colorScheme.primary,
+                          Flexible(
+                            flex: 6,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: l10n.isArabic
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Text(
+                                property.localizedPrice(l10n.isArabic),
+                                style: AppTypography.priceTag.copyWith(
+                                  fontSize: 30,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
                             ),
                           ),
-                          if (!property.forRent)
-                            Text(
-                              l10n.isArabic
-                                  ? '${AppLocalizations.formatPrice(property.pricePerSqm, isArabic: true)} / م²'
-                                  : '${AppLocalizations.formatPrice(property.pricePerSqFt, isArabic: false)} / sq ft',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                              ),
-                            )
-                          else
-                            Text(
-                              l10n.isArabic ? 'إيجار شهري تعاقدي' : 'Contractual Monthly Rent',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 5,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: l10n.isArabic
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              child: !property.forRent
+                                  ? Text(
+                                      l10n.isArabic
+                                          ? '${AppLocalizations.formatPrice(property.pricePerSqm, isArabic: true)} / م²'
+                                          : '${AppLocalizations.formatPrice(property.pricePerSqFt, isArabic: false)} / sq ft',
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                    )
+                                  : Text(
+                                      l10n.isArabic
+                                          ? 'إيجار شهري تعاقدي'
+                                          : 'Contractual Monthly Rent',
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -473,15 +514,8 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // 1. Interactive Sun-Path Simulator
-                      SunPathSimulator(
-                        propertyImageUrl: property.images.first,
-                        orientation: property.sunOrientation,
-                      ),
-                      const SizedBox(height: 28),
-
-                      // 2. High-Resolution Photo Gallery Grid / Carousel (Replacing Virtual Staging)
-                      _buildPhotoGallerySection(context, property, l10n, isDark),
+                      // High-Resolution Floor Plan & Photos Gallery (Replacing Sun-Path Simulator)
+                      _buildFloorPlanAndPhotosSection(context, property, l10n, isDark),
                       const SizedBox(height: 28),
 
                       // 3. Payment Plan Engine & Slider Simulator (SHOWN ONLY IF hasInstallments == true)
@@ -1304,9 +1338,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     );
   }
 
-  // --- PHOTO GALLERY SECTION (REPLACING VIRTUAL STAGING) ---
+  // --- ARCHITECTURAL FLOOR PLAN & PHOTO GALLERY SECTION ---
 
-  Widget _buildPhotoGallerySection(
+  Widget _buildFloorPlanAndPhotosSection(
     BuildContext context,
     PropertyEntity property,
     AppLocalizations l10n,
@@ -1345,27 +1379,37 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section Title
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.photo_library_rounded,
-                    color: primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.isArabic ? 'معرض صور ومساحات الوحدة' : 'Property Photo Gallery',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.architecture_rounded,
+                      color: primary,
+                      size: 22,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.isArabic
+                            ? 'مخطط الوحدة والمعرض الهندسي'
+                            : 'Floor Plan & Photo Gallery',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -1373,7 +1417,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${displayImages.length} ${l10n.isArabic ? "صور عالية الدقة" : "HD Photos"}',
+                  '${property.areaSqm} م² • صافي',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1385,102 +1429,378 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Horizontal Carousel of real room spaces
-          SizedBox(
-            height: 190,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: displayImages.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final imgUrl = displayImages[index];
-                final label = index < roomLabels.length
-                    ? roomLabels[index]
-                    : (l10n.isArabic ? 'مساحة داخلية للوحدة' : 'Interior Space');
-
-                return GestureDetector(
-                  onTap: () {
-                    _showImageZoomDialog(context, imgUrl, label);
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: imgUrl,
-                          width: 250,
-                          height: 190,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            width: 250,
-                            height: 190,
-                            color: isDark ? const Color(0xFF141C2B) : const Color(0xFFE8E5DD),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: primary,
-                              ),
-                            ),
+          // Tab Switcher: Floor Plan vs Photo Gallery
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _mediaTab = 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _mediaTab == 0
+                            ? (isDark ? const Color(0xFF2B384E) : Colors.white)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _mediaTab == 0
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.3 : 0.05,
+                                  ),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.map_rounded,
+                            size: 16,
+                            color: _mediaTab == 0
+                                ? primary
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : const Color(0xFF64748B)),
                           ),
-                        ),
-                        // Gradient Overlay
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(alpha: 0.75),
-                                ],
-                                stops: const [0.45, 1.0],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Zoom Icon
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.fullscreen_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                        // Room Tag Label
-                        Positioned(
-                          bottom: 10,
-                          left: 12,
-                          right: 12,
-                          child: Text(
-                            label,
-                            style: const TextStyle(
+                          const SizedBox(width: 6),
+                          Text(
+                            l10n.isArabic
+                                ? 'المخطط المعماري (2D)'
+                                : 'Floor Plan (2D)',
+                            style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              fontWeight: _mediaTab == 0
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: _mediaTab == 0
+                                  ? (isDark ? Colors.white : const Color(0xFF0F1B2B))
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.6)
+                                      : const Color(0xFF64748B)),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _mediaTab = 1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _mediaTab == 1
+                            ? (isDark ? const Color(0xFF2B384E) : Colors.white)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _mediaTab == 1
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(
+                                    alpha: isDark ? 0.3 : 0.05,
+                                  ),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.photo_library_rounded,
+                            size: 16,
+                            color: _mediaTab == 1
+                                ? primary
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : const Color(0xFF64748B)),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            l10n.isArabic
+                                ? 'صور الغرف (${displayImages.length})'
+                                : 'Room Photos (${displayImages.length})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: _mediaTab == 1
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: _mediaTab == 1
+                                  ? (isDark ? Colors.white : const Color(0xFF0F1B2B))
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.6)
+                                      : const Color(0xFF64748B)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Content based on selected tab
+          if (_mediaTab == 0) ...[
+            // 1. ARCHITECTURAL FLOOR PLAN VIEW
+            Container(
+              height: 220,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5F0),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: primary.withValues(alpha: 0.35),
+                  width: 1.2,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Architectural grid background
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: isDark ? 0.15 : 0.25,
+                      child: CustomPaint(
+                        painter: _ArchitecturalGridPainter(
+                          color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Floor plan graphic illustration & Room layout tags
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.apartment_rounded,
+                          size: 48,
+                          color: primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.isArabic
+                              ? 'المخطط الهندسي التوزيعي للوحدة'
+                              : 'Architectural Layout Blueprint',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.isArabic
+                              ? '${property.bedrooms} غرف نوم • ${property.bathrooms} حمامات • ريسبشن ٣ قطع'
+                              : '${property.bedrooms} Beds • ${property.bathrooms} Baths • 3-Piece Reception',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Quick Room Specs Badges
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            _buildRoomSpecPill('الريسبشن: 8.5 × 5.2 م', isDark, primary),
+                            _buildRoomSpecPill('الماستر: 5.8 × 4.4 م', isDark, primary),
+                            _buildRoomSpecPill('المطبخ: 4.0 × 3.2 م', isDark, primary),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                );
-              },
+
+                  // Download / Fullscreen CTA
+                  Positioned(
+                    bottom: 10,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: theme.cardColor,
+                            content: Text(
+                              l10n.isArabic
+                                  ? 'جاري فتح المخطط الهندسي بدقة ألترا HD...'
+                                  : 'Opening Ultra-HD Blueprint...',
+                              style: TextStyle(
+                                color: primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: primary.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.zoom_in_rounded, size: 14, color: primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.isArabic ? 'تكبير المخطط' : 'Zoom Plan',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            // 2. HIGH RESOLUTION ROOM PHOTOS CAROUSEL
+            SizedBox(
+              height: 190,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: displayImages.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final imgUrl = displayImages[index];
+                  final label = index < roomLabels.length
+                      ? roomLabels[index]
+                      : (l10n.isArabic ? 'مساحة داخلية للوحدة' : 'Interior Space');
+
+                  return GestureDetector(
+                    onTap: () {
+                      _showImageZoomDialog(context, imgUrl, label);
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: imgUrl,
+                            width: 250,
+                            height: 190,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: 250,
+                              height: 190,
+                              color: isDark ? const Color(0xFF141C2B) : const Color(0xFFE8E5DD),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Gradient Overlay
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.75),
+                                  ],
+                                  stops: const [0.45, 1.0],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Zoom Icon
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                          // Room Tag Label
+                          Positioned(
+                            bottom: 10,
+                            left: 12,
+                            right: 12,
+                            child: Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRoomSpecPill(String text, bool isDark, Color primary) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2838) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5),
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+        ),
       ),
     );
   }
@@ -1558,4 +1878,30 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
       ),
     );
   }
+}
+
+class _ArchitecturalGridPainter extends CustomPainter {
+  final Color color;
+
+  _ArchitecturalGridPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.12)
+      ..strokeWidth = 1.0;
+
+    const double step = 20.0;
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArchitecturalGridPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

@@ -1,10 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/constants/app_typography.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
+import 'package:nestify/features/chat/data/chat_mock_service.dart';
+import 'package:nestify/features/chat/presentation/views/chat_conversation_screen.dart';
 import 'package:nestify/features/explore_feed/domain/entities/property_entity.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_event.dart';
@@ -41,9 +42,10 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
   bool _isVrTour = false;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
   late String _selectedSlot;
-  bool _requestChauffeur = true;
-  bool _requestVrKit = false;
-  bool _isConfirmed = false;
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _notesController;
 
   final List<String> _timeSlotsAr = [
     'صباحاً (شروق هادئ) ٠٩:٣٠',
@@ -63,18 +65,50 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
   void initState() {
     super.initState();
     _selectedSlot = _timeSlotsAr[1];
+    _nameController = TextEditingController(text: 'أحمد الشناوي');
+    _phoneController = TextEditingController(text: '+201206667376');
+    _notesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _notesController.dispose();
+    super.dispose();
   }
 
   void _onConfirm() {
+    final clientName = _nameController.text.trim().isEmpty
+        ? 'عميل مهتم'
+        : _nameController.text.trim();
+    final clientPhone = _phoneController.text.trim().isEmpty
+        ? '+201206667376'
+        : _phoneController.text.trim();
+    final notes = _notesController.text.trim();
+
     context.read<ExploreFeedBloc>().add(
           BookTourRequestedEvent(
             property: widget.property,
             tourDate: _selectedDate,
           ),
         );
-    setState(() {
-      _isConfirmed = true;
-    });
+
+    final conv = ChatMockService.instance.startOrGetConversation(
+      property: widget.property,
+      clientName: clientName,
+      clientPhone: clientPhone,
+      tourSlot:
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')} ($_selectedSlot)',
+      notes: notes.isNotEmpty ? notes : null,
+    );
+
+    Navigator.of(context).pop(); // Dismiss bottom sheet
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatConversationScreen(conversation: conv),
+      ),
+    );
   }
 
   @override
@@ -119,12 +153,7 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
               ),
             ],
           ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
-            child: _isConfirmed
-                ? _buildConfirmationView(l10n, theme, isDark)
-                : _buildFormView(l10n, theme, isDark, timeSlots),
-          ),
+          child: _buildFormView(l10n, theme, isDark, timeSlots),
         ),
       ),
     );
@@ -179,18 +208,47 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-        // 1. Tour Format Selector (In-Person VIP vs Spatial VR)
+        // 1. Client Contact Information (Name & Phone)
+        Row(
+          children: [
+            Expanded(
+              child: _buildInputField(
+                controller: _nameController,
+                label: l10n.translate('client_name'),
+                hint: l10n.isArabic ? 'مثال: أحمد الشناوي' : 'e.g. Ahmed Shennawy',
+                icon: Icons.person_outline_rounded,
+                theme: theme,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildInputField(
+                controller: _phoneController,
+                label: l10n.translate('phone_number'),
+                hint: '+201206667376',
+                icon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+                theme: theme,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        // 2. Tour Format Selector (In-Person VIP vs Spatial VR)
         Text(
           l10n.translate('tour_mode'),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
             color: descColor,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Row(
           children: [
             Expanded(
@@ -216,16 +274,16 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-        // 2. Date Selection
+        // 3. Date Selection
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               l10n.translate('select_date'),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: descColor,
               ),
@@ -280,9 +338,9 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
-        // 3. Time Slot Chips
+        // 4. Time Slot Chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
@@ -320,44 +378,25 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             }).toList(),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // 4. Luxury Concierge Add-Ons
-        if (!_isVrTour) ...[
-          _buildAddonSwitch(
-            icon: Icons.directions_car_filled_rounded,
-            title: l10n.isArabic
-                ? 'مرافقة سيارة فاخرة وسائق VIP'
-                : 'Luxury Chauffeur Escort',
-            subtitle: l10n.isArabic
-                ? 'توصيل بسيارة مرسيدس EQS أو لوسيد إير من موقعك'
-                : 'Mercedes EQS private transfer to compound',
-            value: _requestChauffeur,
-            onChanged: (val) => setState(() => _requestChauffeur = val),
-            theme: theme,
-            isDark: isDark,
-          ),
-        ] else ...[
-          _buildAddonSwitch(
-            icon: Icons.headset_mic_rounded,
-            title: l10n.isArabic
-                ? 'توصيل طقم نظارة الواقع الافتراضي'
-                : 'Spatial VR Headset Delivery',
-            subtitle: l10n.isArabic
-                ? 'توصيل نظارة Apple Vision Pro مهيأة إلى مكان إقامتك'
-                : 'Dispatched to your residence before the tour',
-            value: _requestVrKit,
-            onChanged: (val) => setState(() => _requestVrKit = val),
-            theme: theme,
-            isDark: isDark,
-          ),
-        ],
-        const SizedBox(height: 22),
+        // 5. Inspection Notes (ملاحظات المعاينة)
+        _buildInputField(
+          controller: _notesController,
+          label: l10n.translate('inspection_notes'),
+          hint: l10n.isArabic
+              ? 'مثال: الاستفسار عن خطة السداد وإمكانية المعاينة العائلية'
+              : 'e.g. Inquire about payment plan or family viewing',
+          icon: Icons.chat_outlined,
+          theme: theme,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 20),
 
         // Confirm Button
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
@@ -368,10 +407,11 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
               elevation: 0,
             ),
             onPressed: _onConfirm,
-            child: Text(
-              l10n.translate('confirm_booking'),
+            icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+            label: Text(
+              l10n.translate('confirm_tour_and_chat'),
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -381,123 +421,59 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
     );
   }
 
-  Widget _buildConfirmationView(
-    AppLocalizations l10n,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    final primaryColor = theme.colorScheme.primary;
-    final titleColor = isDark ? Colors.white : const Color(0xFF0F1B2B);
-
-    final tourFormat = _isVrTour
-        ? (l10n.isArabic ? 'جولة واقع افتراضي (VR)' : 'Spatial VR Tour')
-        : (l10n.isArabic ? 'معاينة ميدانية VIP' : 'In-Person VIP Tour');
-
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required ThemeData theme,
+    required bool isDark,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    IconData? icon,
+  }) {
     return Column(
-      key: const ValueKey('confirmed_view'),
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: primaryColor.withValues(alpha: 0.15),
-            border: Border.all(color: primaryColor, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: primaryColor.withValues(alpha: 0.3),
-                blurRadius: 18,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              Icons.check_rounded,
-              color: primaryColor,
-              size: 40,
-            ),
-          ),
-        ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
-        const SizedBox(height: 18),
         Text(
-          l10n.translate('booking_confirmed'),
-          style: AppTypography.headlineMedium.copyWith(
+          label,
+          style: TextStyle(
+            fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: titleColor,
+            color: isDark ? Colors.white : const Color(0xFF0F1B2B),
           ),
-          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF1E2838)
-                : const Color(0xFFFBF9F5),
-            borderRadius: BorderRadius.circular(18),
+            color: isDark ? const Color(0xFF1E2838) : const Color(0xFFF3F0EA),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.1)
-                  : const Color(0xFFE5E0D8),
+                  : const Color(0xFFE2DDD5),
             ),
           ),
-          child: Column(
-            children: [
-              _buildSummaryRow(
-                l10n.isArabic ? 'نوع الجولة' : 'Tour Format',
-                tourFormat,
-                isDark,
-              ),
-              const Divider(height: 16),
-              _buildSummaryRow(
-                l10n.isArabic ? 'التاريخ والوقت' : 'Date & Time',
-                l10n.isArabic
-                    ? '${AppLocalizations.convertToArabicDigits(_selectedDate.month)}/${AppLocalizations.convertToArabicDigits(_selectedDate.day)} • $_selectedSlot'
-                    : '${_selectedDate.month}/${_selectedDate.day} @ $_selectedSlot',
-                isDark,
-              ),
-              if (_requestChauffeur && !_isVrTour) ...[
-                const Divider(height: 16),
-                _buildSummaryRow(
-                  l10n.isArabic ? 'المرافقة الفاخرة' : 'Escort',
-                  l10n.isArabic
-                      ? 'مرسيدس EQS بسائق خاص معتمدة'
-                      : 'Mercedes EQS Chauffeur Confirmed',
-                  isDark,
-                ),
-              ],
-              if (_requestVrKit && _isVrTour) ...[
-                const Divider(height: 16),
-                _buildSummaryRow(
-                  l10n.isArabic ? 'طقم الواقع الافتراضي' : 'Spatial Kit',
-                  l10n.isArabic
-                      ? 'إرسال Apple Vision Pro لمقر إقامتك'
-                      : 'Vision Pro Dispatched to Residence',
-                  isDark,
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 22),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : const Color(0xFF0F1B2B),
             ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              l10n.isArabic ? 'تم / العودة للوحدة' : 'Done',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
+              ),
+              prefixIcon: icon != null
+                  ? Icon(icon, size: 18, color: theme.colorScheme.primary)
+                  : null,
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
           ),
         ),
@@ -564,98 +540,6 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAddonSwitch({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required ThemeData theme,
-    required bool isDark,
-  }) {
-    final primaryColor = theme.colorScheme.primary;
-    final cardBg = isDark
-        ? const Color(0xFF1E2838)
-        : const Color(0xFFFBF9F5);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: value
-              ? primaryColor.withValues(alpha: 0.6)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : const Color(0xFFE5E0D8)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: primaryColor, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F1B2B),
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            activeThumbColor: primaryColor,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F1B2B),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

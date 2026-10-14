@@ -1,18 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
-import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
-import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
+import 'package:nestify/features/chat/data/chat_mock_service.dart';
+import 'package:nestify/features/chat/presentation/views/chats_list_screen.dart';
 import 'package:nestify/features/map_hub/presentation/views/interactive_map_hub_view.dart';
+import 'package:nestify/features/marketplace/presentation/views/add_property_listing_screen.dart';
 import 'package:nestify/features/marketplace/presentation/views/home_marketplace_view.dart';
-import 'package:nestify/features/mortgage_planner/presentation/views/mortgage_planner_view.dart';
-import 'package:nestify/features/portfolio/presentation/views/portfolio_view.dart';
 import 'package:nestify/features/profile/presentation/views/profile_settings_view.dart';
 
 /// MainNavigationShell provides the persistent glassmorphic navigation shell
-/// uniting Marketplace, Interactive Map, Egyptian Mortgage Planner, Portfolio, and Profile.
+/// uniting Marketplace, Interactive Map, Add Listing CTA, Chats Hub, and Profile.
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
@@ -26,8 +24,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _destinations = const [
     HomeMarketplaceView(),
     InteractiveMapHubView(),
-    EgyptianMortgagePlannerView(),
-    PortfolioView(),
+    AddPropertyListingScreen(),
+    ChatsListScreen(),
     ProfileSettingsView(),
   ];
 
@@ -50,8 +48,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
           // Floating Glassmorphic Bottom Navigation Bar
           Positioned(
-            left: 16,
-            right: 16,
+            left: 14,
+            right: 14,
             bottom: MediaQuery.of(context).padding.bottom + 8,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
@@ -59,7 +57,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: 6,
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
@@ -79,10 +77,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       ),
                     ],
                   ),
-                  child: BlocBuilder<ExploreFeedBloc, ExploreFeedState>(
-                    builder: (context, feedState) {
-                      final savedCount = feedState.savedProperties.length;
-
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: ChatMockService.instance.totalUnreadNotifier,
+                    builder: (context, unreadCount, _) {
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -90,31 +87,37 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                             context: context,
                             index: 0,
                             icon: Icons.home_work_rounded,
+                            activeIcon: Icons.home_work_rounded,
                             label: l10n.translate('nav_marketplace'),
                           ),
                           _buildNavItem(
                             context: context,
                             index: 1,
                             icon: Icons.radar_rounded,
+                            activeIcon: Icons.radar_rounded,
                             label: l10n.translate('nav_map'),
                           ),
                           _buildNavItem(
                             context: context,
                             index: 2,
-                            icon: Icons.calculate_rounded,
-                            label: l10n.translate('nav_mortgage_planner'),
+                            icon: Icons.add_circle_outline_rounded,
+                            activeIcon: Icons.add_circle_rounded,
+                            label: l10n.translate('nav_add_property'),
+                            isCta: true,
                           ),
                           _buildNavItem(
                             context: context,
                             index: 3,
-                            icon: Icons.favorite_rounded,
-                            label: l10n.translate('nav_portfolio'),
-                            badgeCount: savedCount > 0 ? savedCount : null,
+                            icon: Icons.chat_bubble_outline_rounded,
+                            activeIcon: Icons.chat_bubble_rounded,
+                            label: l10n.translate('nav_chats'),
+                            badgeCount: unreadCount > 0 ? unreadCount : null,
                           ),
                           _buildNavItem(
                             context: context,
                             index: 4,
                             icon: Icons.person_outline_rounded,
+                            activeIcon: Icons.person_rounded,
                             label: l10n.translate('nav_profile'),
                           ),
                         ],
@@ -134,12 +137,68 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     required BuildContext context,
     required int index,
     required IconData icon,
+    IconData? activeIcon,
     required String label,
     int? badgeCount,
+    bool isCta = false,
   }) {
     final isSelected = _currentIndex == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
+
+    if (isCta) {
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: primaryColor,
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: primaryColor.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(
+                isSelected ? (activeIcon ?? icon) : icon,
+                size: 20,
+                color: isSelected
+                    ? (isDark ? const Color(0xFF0F1B2B) : Colors.white)
+                    : primaryColor,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected
+                    ? primaryColor
+                    : (isDark ? AppColors.textSecondary : const Color(0xFF475569)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return GestureDetector(
       onTap: () {
@@ -151,8 +210,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 12 : 8,
-          vertical: 6,
+          horizontal: isSelected ? 10 : 6,
+          vertical: 5,
         ),
         decoration: BoxDecoration(
           color: isSelected
@@ -173,7 +232,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               clipBehavior: Clip.none,
               children: [
                 Icon(
-                  icon,
+                  isSelected ? (activeIcon ?? icon) : icon,
                   size: 20,
                   color: isSelected
                       ? primaryColor
@@ -182,19 +241,19 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 if (badgeCount != null)
                   Positioned(
                     top: -4,
-                    right: -6,
+                    right: -7,
                     child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE11D48),
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '$badgeCount',
-                        style: TextStyle(
-                          fontSize: 8,
+                        style: const TextStyle(
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? AppColors.backgroundDark : Colors.white,
+                          color: Colors.white,
                         ),
                       ),
                     ),

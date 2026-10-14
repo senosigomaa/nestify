@@ -87,25 +87,68 @@ class _PortfolioViewState extends State<PortfolioView>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('saved_portfolio'),
-                        style: AppTypography.headlineLarge.copyWith(
-                          color: theme.colorScheme.onSurface,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (Navigator.canPop(context)) ...[
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              margin: const EdgeInsets.only(left: 8),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF1E2838)
+                                    : const Color(0xFFF1F5F9),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : const Color(0xFFCBD5E1),
+                                ),
+                              ),
+                              child: Icon(
+                                Directionality.of(context) == TextDirection.rtl
+                                    ? Icons.arrow_forward_ios_rounded
+                                    : Icons.arrow_back_ios_new_rounded,
+                                size: 15,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l10n.translate('saved_portfolio'),
+                                style: AppTypography.headlineLarge.copyWith(
+                                  fontSize: 18,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                l10n.translate('membership_tier'),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      Text(
-                        l10n.translate('membership_tier'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Row(
                     children: [
                       GestureDetector(

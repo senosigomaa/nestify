@@ -64,3 +64,12 @@ class FilterNeighborhoodEvent extends ExploreFeedEvent {
   @override
   List<Object?> get props => [neighborhood];
 }
+
+class ToggleSavePropertyEvent extends ExploreFeedEvent {
+  final PropertyEntity property;
+
+  const ToggleSavePropertyEvent(this.property);
+
+  @override
+  List<Object?> get props => [property];
+}

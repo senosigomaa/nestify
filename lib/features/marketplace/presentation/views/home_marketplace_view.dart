@@ -1520,7 +1520,9 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '${l10n.translate('down_payment')}: ${property.localizedDownPayment(l10n.isArabic)}',
+                                property.hasInstallments
+                                    ? '${l10n.translate('down_payment')}: ${property.localizedDownPayment(l10n.isArabic)}'
+                                    : (l10n.isArabic ? 'بيع كاش بالكامل' : 'Full Cash Deal'),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -1531,7 +1533,9 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                '${l10n.translate('monthly_installment')}: ${property.localizedMonthlyInstallment(l10n.isArabic)}',
+                                property.hasInstallments
+                                    ? '${l10n.translate('monthly_installment')}: ${property.localizedMonthlyInstallment(l10n.isArabic)}'
+                                    : (l10n.isArabic ? 'استلام فوري / بدون أقساط' : 'Immediate / No Plan'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),

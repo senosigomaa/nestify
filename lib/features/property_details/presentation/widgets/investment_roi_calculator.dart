@@ -45,7 +45,9 @@ class _InvestmentRoiCalculatorState extends State<InvestmentRoiCalculator> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final annualGrossRent = _monthlyRent * 12 * _occupancyRate;
-    final grossYieldPct = (annualGrossRent / widget.propertyPrice) * 100;
+    final grossYieldPct = (widget.propertyPrice > 0 && annualGrossRent.isFinite)
+        ? (annualGrossRent / widget.propertyPrice) * 100
+        : 0.0;
     final downPaymentAmount = widget.propertyPrice * _downPaymentPct;
 
     // Projected 5-Year Capital Value: P * (1 + r)^5
