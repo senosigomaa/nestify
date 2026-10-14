@@ -58,5 +58,36 @@ void main() {
       expect(prop.localizedFinishing(true).isNotEmpty, isTrue);
       expect(prop.localizedDelivery(true).isNotEmpty, isTrue);
     });
+
+    test('Strict Business Logic Segregation (Rent vs Cash vs Installments vs ROI)', () {
+      final rentalProps = properties.where((p) => p.forRent).toList();
+      expect(rentalProps.isNotEmpty, isTrue);
+      for (final r in rentalProps) {
+        expect(r.hasInstallments, isFalse);
+        expect(r.securityDepositMonths, greaterThanOrEqualTo(1));
+        expect(r.securityDepositAmount, greaterThan(0));
+        expect(r.minLeaseYears, greaterThanOrEqualTo(1));
+        expect(r.rentalTerms.isNotEmpty, isTrue);
+      }
+
+      final cashOnlyProps = properties.where((p) => p.isCashOnly).toList();
+      expect(cashOnlyProps.isNotEmpty, isTrue);
+      for (final c in cashOnlyProps) {
+        expect(c.forRent, isFalse);
+        expect(c.hasInstallments, isFalse);
+        expect(c.transferFeeAmount, equals(c.price * 0.025));
+      }
+
+      final installmentProps = properties.where((p) => p.hasInstallments).toList();
+      expect(installmentProps.isNotEmpty, isTrue);
+      for (final inst in installmentProps) {
+        expect(inst.forRent, isFalse);
+        expect(inst.isCashOnly, isFalse);
+        expect(inst.installmentYears, greaterThan(0));
+      }
+
+      final investmentOpportunities = properties.where((p) => p.isInvestmentOpportunity).toList();
+      expect(investmentOpportunities.isNotEmpty, isTrue);
+    });
   });
 }

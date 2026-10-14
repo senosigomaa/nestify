@@ -184,47 +184,99 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                       children: [
                         // Location Dropdown
                         _buildLocationSelector(l10n),
+                        const SizedBox(width: 8),
 
-                        // Actions: Theme Switcher Toggle + Swipe Mode
-                        Row(
-                          children: [
-                            BlocBuilder<ThemeBloc, ThemeState>(
-                              builder: (context, themeState) {
-                                final isDarkTheme = themeState.isDark;
-                                return GestureDetector(
+                        // Actions: Scrollable Horizontal Rail ensuring 0 Overflow on all screens
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                BlocBuilder<ThemeBloc, ThemeState>(
+                                  builder: (context, themeState) {
+                                    final isDarkTheme = themeState.isDark;
+                                    return GestureDetector(
+                                      onTap: () {
+                                        context
+                                            .read<ThemeBloc>()
+                                            .add(const ToggleThemeEvent());
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme.cardColor,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: primaryColor.withValues(alpha: 0.6),
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              isDarkTheme
+                                                  ? Icons.light_mode_rounded
+                                                  : Icons.dark_mode_rounded,
+                                              size: 14,
+                                              color: primaryColor,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              isDarkTheme
+                                                  ? (l10n.isArabic ? 'فاتح' : 'Light')
+                                                  : (l10n.isArabic ? 'داكن' : 'Dark'),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 6),
+                                // Add Property Listing Flow
+                                GestureDetector(
                                   onTap: () {
-                                    context
-                                        .read<ThemeBloc>()
-                                        .add(const ToggleThemeEvent());
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const AddPropertyListingScreen(),
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
                                       vertical: 7,
                                     ),
-                                    margin: const EdgeInsets.only(right: 8),
                                     decoration: BoxDecoration(
-                                      color: theme.cardColor,
+                                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: primaryColor.withValues(alpha: 0.6),
+                                        color: primaryColor.withValues(alpha: 0.5),
                                         width: 1.2,
                                       ),
                                     ),
                                     child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          isDarkTheme
-                                              ? Icons.light_mode_rounded
-                                              : Icons.dark_mode_rounded,
+                                          Icons.add_circle_outline_rounded,
                                           size: 14,
                                           color: primaryColor,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          isDarkTheme
-                                              ? (l10n.isArabic ? 'فاتح' : 'Light')
-                                              : (l10n.isArabic ? 'داكن' : 'Dark'),
+                                          l10n.isArabic ? 'أضف عقارك +' : 'List +',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
@@ -234,101 +286,60 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                                       ],
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                            // Add Property Listing Flow
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const AddPropertyListingScreen(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 7,
                                 ),
-                                margin: const EdgeInsetsDirectional.only(end: 6),
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: primaryColor.withValues(alpha: 0.5),
-                                    width: 1.2,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.add_circle_outline_rounded,
-                                      size: 14,
-                                      color: primaryColor,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.isArabic ? 'أضف عقارك +' : 'List +',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: primaryColor,
+                                const SizedBox(width: 6),
+                                // Switch to Tinder Swipe Deck Mode
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const ExploreScreen(),
                                       ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 7,
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // Switch to Tinder Swipe Deck Mode
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const ExploreScreen(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: isDark
-                                      ? AppColors.cyanGradient
-                                      : const LinearGradient(
-                                          colors: [Color(0xFFC5A880), Color(0xFFD4AF37)],
+                                    decoration: BoxDecoration(
+                                      gradient: isDark
+                                          ? AppColors.cyanGradient
+                                          : const LinearGradient(
+                                              colors: [Color(0xFFC5A880), Color(0xFFD4AF37)],
+                                            ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: primaryColor.withValues(alpha: 0.3),
+                                          blurRadius: 10,
                                         ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: primaryColor.withValues(alpha: 0.3),
-                                      blurRadius: 10,
+                                      ],
                                     ),
-                                  ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.style_rounded,
+                                          size: 15,
+                                          color: isDark ? AppColors.backgroundDark : Colors.white,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          l10n.translate('mode_switch_swipe'),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? AppColors.backgroundDark : Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.style_rounded,
-                                      size: 15,
-                                      color: isDark ? AppColors.backgroundDark : Colors.white,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      l10n.translate('mode_switch_swipe'),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark ? AppColors.backgroundDark : Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -858,16 +869,21 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
             color: primaryColor,
             size: 18,
           ),
-          const SizedBox(width: 6),
-          Text(
-            _selectedLocation,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: theme.colorScheme.onSurface,
+          const SizedBox(width: 4),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 100),
+            child: Text(
+              _selectedLocation,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
           Icon(
             Icons.keyboard_arrow_down_rounded,
             color: primaryColor,

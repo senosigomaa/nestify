@@ -49,6 +49,13 @@ class PropertyEntity extends Equatable {
   final int cashDiscountPercent; // e.g. 25 (%)
   final String compoundName;
 
+  // Strict Business Logic Flags & Rental Specs
+  final bool isCashOnly; // e.g. true for direct cash deals without installment plans
+  final bool isInvestmentOpportunity; // e.g. true for premier high-ROI commercial/residential deals
+  final int securityDepositMonths; // e.g. 2 months for rentals
+  final int minLeaseYears; // e.g. 1 year
+  final List<String> rentalTerms; // e.g. ['عائلات فقط', 'شامل الصيانة', 'مفروش ومكيف']
+
   const PropertyEntity({
     required this.id,
     required this.title,
@@ -90,7 +97,40 @@ class PropertyEntity extends Equatable {
     this.offeringType = 'primary',
     this.cashDiscountPercent = 25,
     this.compoundName = 'Palm Hills',
+    this.isCashOnly = false,
+    this.isInvestmentOpportunity = false,
+    this.securityDepositMonths = 2,
+    this.minLeaseYears = 1,
+    this.rentalTerms = const [],
   });
+
+  /// Transaction type helper getters
+  bool get forRent => priceType == 'rent';
+  bool get hasInstallments => !forRent && !isCashOnly && installmentYears > 0;
+
+  /// Security deposit calculation for rentals
+  double get securityDepositAmount => price * securityDepositMonths;
+
+  String localizedSecurityDeposit(bool isArabic) {
+    return AppLocalizations.formatPrice(
+      securityDepositAmount,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
+  }
+
+  /// Transfer and property registration fee (2.5%)
+  double get transferFeeAmount => price * 0.025;
+
+  String localizedTransferFee(bool isArabic) {
+    return AppLocalizations.formatPrice(
+      transferFeeAmount,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
+  }
 
   /// Formatted price with commas (e.g. 14,500,000 EGP)
   String get formattedPrice {
@@ -299,5 +339,10 @@ class PropertyEntity extends Equatable {
         offeringType,
         cashDiscountPercent,
         compoundName,
+        isCashOnly,
+        isInvestmentOpportunity,
+        securityDepositMonths,
+        minLeaseYears,
+        rentalTerms,
       ];
 }

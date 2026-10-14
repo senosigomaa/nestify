@@ -43,6 +43,11 @@ class PropertyModel extends PropertyEntity {
     super.offeringType,
     super.cashDiscountPercent,
     super.compoundName,
+    super.isCashOnly,
+    super.isInvestmentOpportunity,
+    super.securityDepositMonths,
+    super.minLeaseYears,
+    super.rentalTerms,
   });
 
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
@@ -98,6 +103,15 @@ class PropertyModel extends PropertyEntity {
       offeringType: json['offeringType'] as String? ?? 'primary',
       cashDiscountPercent: (json['cashDiscountPercent'] as num?)?.toInt() ?? 25,
       compoundName: json['compoundName'] as String? ?? 'Palm Hills',
+      isCashOnly: json['isCashOnly'] as bool? ?? false,
+      isInvestmentOpportunity: json['isInvestmentOpportunity'] as bool? ?? false,
+      securityDepositMonths:
+          (json['securityDepositMonths'] as num?)?.toInt() ?? 2,
+      minLeaseYears: (json['minLeaseYears'] as num?)?.toInt() ?? 1,
+      rentalTerms: (json['rentalTerms'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 
@@ -143,6 +157,11 @@ class PropertyModel extends PropertyEntity {
       'offeringType': offeringType,
       'cashDiscountPercent': cashDiscountPercent,
       'compoundName': compoundName,
+      'isCashOnly': isCashOnly,
+      'isInvestmentOpportunity': isInvestmentOpportunity,
+      'securityDepositMonths': securityDepositMonths,
+      'minLeaseYears': minLeaseYears,
+      'rentalTerms': rentalTerms,
     };
   }
 
@@ -188,6 +207,11 @@ class PropertyModel extends PropertyEntity {
       offeringType: entity.offeringType,
       cashDiscountPercent: entity.cashDiscountPercent,
       compoundName: entity.compoundName,
+      isCashOnly: entity.isCashOnly,
+      isInvestmentOpportunity: entity.isInvestmentOpportunity,
+      securityDepositMonths: entity.securityDepositMonths,
+      minLeaseYears: entity.minLeaseYears,
+      rentalTerms: entity.rentalTerms,
     );
   }
 }

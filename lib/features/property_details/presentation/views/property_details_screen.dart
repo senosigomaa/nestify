@@ -10,12 +10,12 @@ import 'package:nestify/core/localization/app_localizations.dart';
 import 'package:nestify/features/marketplace/presentation/widgets/direct_connect_buttons.dart';
 import '../widgets/egyptian_payment_plan_slider.dart';
 import '../widgets/sun_path_simulator.dart';
-import '../widgets/virtual_style_switcher.dart';
 import '../widgets/investment_roi_calculator.dart';
 import '../widgets/interactive_booking_sheet.dart';
 
-/// PropertyDetailsScreen provides the full interactive luxury experience
-/// including the Sun-Path Simulator, Virtual Style Switcher, and Smart Split Calculator.
+/// PropertyDetailsScreen enforces strict Egyptian real estate business logic:
+/// segregates Rent vs. Cash Sale vs. Installment, removes gimmicks, and presents
+/// room spaces in high-resolution photography.
 class PropertyDetailsScreen extends StatefulWidget {
   final PropertyEntity property;
 
@@ -34,6 +34,51 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
 
   void _showBookingDialog(BuildContext context) {
     InteractiveBookingSheet.show(context, widget.property);
+  }
+
+  void _showImageZoomDialog(BuildContext context, String imageUrl, String title) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: InteractiveViewer(
+                  clipBehavior: Clip.none,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -185,29 +230,36 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Price & Per Sq Ft
+                      // Price & Per Sq Ft / Rent Note
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            l10n.isArabic
-                                ? property.localizedPrice(true)
-                                : property.formattedPrice,
+                            property.localizedPrice(l10n.isArabic),
                             style: AppTypography.priceTag.copyWith(
-                              fontSize: 34,
+                              fontSize: 32,
                               color: theme.colorScheme.primary,
                             ),
                           ),
-                          Text(
-                            l10n.isArabic
-                                ? '${AppLocalizations.formatPrice(property.pricePerSqm, isArabic: true)} / م²'
-                                : '${AppLocalizations.formatPrice(property.pricePerSqFt, isArabic: false)} / sq ft',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          if (!property.forRent)
+                            Text(
+                              l10n.isArabic
+                                  ? '${AppLocalizations.formatPrice(property.pricePerSqm, isArabic: true)} / م²'
+                                  : '${AppLocalizations.formatPrice(property.pricePerSqFt, isArabic: false)} / sq ft',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            )
+                          else
+                            Text(
+                              l10n.isArabic ? 'إيجار شهري تعاقدي' : 'Contractual Monthly Rent',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -281,179 +333,82 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                               color: theme.colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
-                            _buildSpecChip(
-                              Icons.event_available_rounded,
-                              property.localizedDelivery(l10n.isArabic),
-                              color: theme.colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            _buildSpecChip(
-                              Icons.verified_user_outlined,
-                              property.localizedOfferingType(l10n.isArabic),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildSpecChip(
-                              Icons.shield_outlined,
-                              '${l10n.translate('maintenance_fee')}: ${(property.maintenanceRatio * 100).toInt()}%',
-                            ),
+                            if (property.forRent) ...[
+                              _buildSpecChip(
+                                Icons.chair_outlined,
+                                property.isFurnished
+                                    ? (l10n.isArabic ? 'مفروش بالكامل' : 'Furnished')
+                                    : (l10n.isArabic ? 'غير مفروش' : 'Unfurnished'),
+                                color: const Color(0xFF2E7D32),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.calendar_today_rounded,
+                                '${l10n.isArabic ? "الحد الأدنى" : "Min"}: ${property.minLeaseYears} ${l10n.isArabic ? "سنة" : "Yr"}',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.lock_outline_rounded,
+                                '${l10n.isArabic ? "تأمين" : "Deposit"}: ${property.securityDepositMonths} ${l10n.isArabic ? "أشهر" : "mos"}',
+                              ),
+                            ] else if (property.isCashOnly) ...[
+                              _buildSpecChip(
+                                Icons.payments_outlined,
+                                l10n.isArabic ? 'بيع كاش فقط' : 'Cash Only',
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.event_available_rounded,
+                                property.localizedDelivery(l10n.isArabic),
+                                color: theme.colorScheme.secondary,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.verified_user_outlined,
+                                property.localizedOfferingType(l10n.isArabic),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.shield_outlined,
+                                '${l10n.translate('maintenance_fee')}: ${(property.maintenanceRatio * 100).toInt()}%',
+                              ),
+                            ] else ...[
+                              _buildSpecChip(
+                                Icons.event_available_rounded,
+                                property.localizedDelivery(l10n.isArabic),
+                                color: theme.colorScheme.secondary,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.verified_user_outlined,
+                                property.localizedOfferingType(l10n.isArabic),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.calendar_month_outlined,
+                                '${property.installmentYears} ${l10n.isArabic ? "سنوات تقسيط" : "Yrs Installment"}',
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSpecChip(
+                                Icons.shield_outlined,
+                                '${l10n.translate('maintenance_fee')}: ${(property.maintenanceRatio * 100).toInt()}%',
+                              ),
+                            ],
                           ],
                         ),
                       ),
                       const SizedBox(height: 22),
 
-                      // Authentic Egyptian Payment & Pricing Overview Card
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5EE),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  l10n.translate('total_price'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    l10n.isArabic
-                                        ? 'خصم ${property.cashDiscountPercent}% للكاش'
-                                        : '${property.cashDiscountPercent}% Cash Off',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF2E7D32),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                property.localizedPrice(l10n.isArabic),
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Divider(height: 1),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.translate('down_payment'),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          property.localizedDownPayment(l10n.isArabic),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(width: 1, height: 28, color: theme.dividerColor),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.translate('monthly_installment'),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          property.localizedMonthlyInstallment(l10n.isArabic),
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                            color: theme.colorScheme.secondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(width: 1, height: 28, color: theme.dividerColor),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.translate('quarterly_installment'),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          property.localizedQuarterlyInstallment(l10n.isArabic),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      // STRICT CONDITIONAL RENDERING: Transaction Specific Pricing Overview
+                      if (property.forRent)
+                        _buildRentalPricingCard(context, property, l10n, isDark)
+                      else if (property.isCashOnly)
+                        _buildCashSaleCard(context, property, l10n, isDark)
+                      else
+                        _buildInstallmentPricingCard(context, property, l10n, isDark),
+
                       const SizedBox(height: 22),
 
                       // Description
@@ -525,29 +480,33 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // 2. Generative Virtual Style Switcher
-                      VirtualStyleSwitcher(
-                        styleVariants: property.styleVariants,
-                      ),
+                      // 2. High-Resolution Photo Gallery Grid / Carousel (Replacing Virtual Staging)
+                      _buildPhotoGallerySection(context, property, l10n, isDark),
                       const SizedBox(height: 28),
 
-                      // 3. Realistic Egyptian Payment Plan Engine & Slider Simulator
-                      EgyptianPaymentPlanSlider(
-                        propertyPrice: property.price,
-                        initialDownPaymentPct: (property.downPaymentPrice > 0
-                            ? (property.downPaymentPrice / property.price * 100)
-                            : 10.0),
-                        initialYears: property.installmentYears,
-                        maintenancePct: property.maintenanceRatio,
-                        cashDiscountPct: property.cashDiscountPercent,
-                      ),
-                      const SizedBox(height: 28),
+                      // 3. Payment Plan Engine & Slider Simulator (SHOWN ONLY IF hasInstallments == true)
+                      if (property.hasInstallments) ...[
+                        EgyptianPaymentPlanSlider(
+                          propertyPrice: property.price,
+                          initialDownPaymentPct: (property.downPaymentPrice > 0
+                              ? (property.downPaymentPrice / property.price * 100)
+                              : 10.0),
+                          initialYears: property.installmentYears,
+                          maintenancePct: property.maintenanceRatio,
+                          cashDiscountPct: property.cashDiscountPercent,
+                        ),
+                        const SizedBox(height: 28),
+                      ],
 
-                      // 4. Investment & Yield Analysis (ROI)
-                      InvestmentRoiCalculator(
-                        propertyPrice: property.price,
-                      ),
-                      const SizedBox(height: 140), // 140.h safe padding ensuring scrollable content clears floating bar
+                      // 4. Investment & Yield Analysis (SHOWN ONLY IF isInvestmentOpportunity == true)
+                      if (property.isInvestmentOpportunity) ...[
+                        InvestmentRoiCalculator(
+                          propertyPrice: property.price,
+                        ),
+                        const SizedBox(height: 28),
+                      ],
+
+                      const SizedBox(height: 140), // Safe padding ensuring scrollable content clears floating bar
                     ],
                   ),
                 ),
@@ -610,11 +569,22 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
+                            final msg = property.forRent
+                                ? (l10n.isArabic
+                                    ? 'تم إرسال طلب معاينة الإيجار للمالك'
+                                    : 'Rental viewing request sent to owner')
+                                : (property.isCashOnly
+                                    ? (l10n.isArabic
+                                        ? 'تم تقديم عرض الشراء الكاش للوكيل'
+                                        : 'Cash purchase offer submitted to agent')
+                                    : (l10n.isArabic
+                                        ? 'تم طلب خطة السداد المخصصة من المطور'
+                                        : 'Custom payment plan requested from developer'));
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 backgroundColor: theme.cardColor,
                                 content: Text(
-                                  context.tr('offer_initialized'),
+                                  msg,
                                   style: TextStyle(
                                     color: theme.colorScheme.primary,
                                     fontWeight: FontWeight.w600,
@@ -624,7 +594,17 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                             );
                           },
                           child: Text(
-                            l10n.isArabic ? "طلب خطة سداد مخصصة" : "Request Custom Plan",
+                            property.forRent
+                                ? (l10n.isArabic
+                                    ? "طلب موعد معاينة للإيجار"
+                                    : "Request Rental Viewing")
+                                : (property.isCashOnly
+                                    ? (l10n.isArabic
+                                        ? "تقديم عرض شراء كاش"
+                                        : "Submit Cash Offer")
+                                    : (l10n.isArabic
+                                        ? "طلب خطة سداد مخصصة"
+                                        : "Request Custom Plan")),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -634,6 +614,870 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- STRICT CONDITIONAL PRICING CARDS ---
+
+  Widget _buildRentalPricingCard(
+    BuildContext context,
+    PropertyEntity property,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5EE),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: primary.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.key_rounded, size: 14, color: primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.isArabic ? 'وحدة سكنية للإيجار' : 'Residential Rental',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  property.isFurnished
+                      ? (l10n.isArabic ? 'مفروشة بالكامل' : 'Fully Furnished')
+                      : (l10n.isArabic ? 'غير مفروشة' : 'Unfurnished'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.isArabic ? 'الإيجار الشهري الصافي' : 'Net Monthly Rent',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              property.localizedPrice(l10n.isArabic),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: primary,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+
+          // Rental Specs Row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'مبلغ التأمين التعاقدي' : 'Security Deposit',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedSecurityDeposit(l10n.isArabic),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.isArabic
+                          ? '(${property.securityDepositMonths} أشهر مستردة)'
+                          : '(${property.securityDepositMonths} mos refundable)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 34, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'الحد الأدنى للعقد' : 'Min. Lease',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        l10n.isArabic
+                            ? (property.minLeaseYears == 1 ? 'سنة واحدة' : '${property.minLeaseYears} سنوات')
+                            : '${property.minLeaseYears} Year',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.isArabic ? 'قابل للتجديد' : 'Renewable',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 34, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'مصاريف الصيانة' : 'Maintenance',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        l10n.isArabic ? 'شاملة بالكامل' : 'Included',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.isArabic ? 'على المالك' : 'Covered by Owner',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Rental Terms Checklist
+          if (property.rentalTerms.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.cardColor.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.2 : 0.4,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.gavel_rounded, size: 14, color: primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.isArabic ? 'شروط وقواعد الإيجار التعاقدية:' : 'Lease Terms & Rules:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ...property.rentalTerms.map(
+                    (term) => Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 14,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              term,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCashSaleCard(
+    BuildContext context,
+    PropertyEntity property,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5EE),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: primary.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.payments_rounded, size: 14, color: primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.isArabic ? 'بيع كاش فقط (بدون تقسيط)' : 'Cash Only Sale',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (property.cashDiscountPercent > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.isArabic
+                        ? 'خصم فوري ${property.cashDiscountPercent}% للكاش'
+                        : '${property.cashDiscountPercent}% Instant Cash Off',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.isArabic ? 'السعر الإجمالي المطلوب كاش' : 'Total Cash Asking Price',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              property.localizedPrice(l10n.isArabic),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: primary,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+
+          // Cash Specific Breakdown
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'وديعة الصيانة' : 'Maintenance Deposit',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${(property.maintenanceRatio * 100).toInt()}%',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      AppLocalizations.formatPrice(
+                        property.price * property.maintenanceRatio,
+                        isArabic: l10n.isArabic,
+                        currencySymbol: 'ج.م',
+                      ),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 34, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'رسوم التنازل والتسجيل' : 'Transfer & Reg.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedTransferFee(l10n.isArabic),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.isArabic ? 'نسبة ٢.٥٪ قانونية' : '2.5% Statutory Fee',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 34, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.isArabic ? 'موعد الاستلام' : 'Delivery',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedDelivery(l10n.isArabic),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.isArabic ? 'معاينة فورية متاحة' : 'Viewing Available',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstallmentPricingCard(
+    BuildContext context,
+    PropertyEntity property,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5EE),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: primary.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_month_rounded, size: 14, color: primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.isArabic
+                          ? 'تقسيط مباشر حتى ${property.installmentYears} سنوات'
+                          : 'Installments up to ${property.installmentYears} Yrs',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (property.cashDiscountPercent > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.isArabic
+                        ? 'خصم ${property.cashDiscountPercent}% للكاش'
+                        : '${property.cashDiscountPercent}% Cash Off',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.translate('total_price'),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              property.localizedPrice(l10n.isArabic),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: primary,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.translate('down_payment'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedDownPayment(l10n.isArabic),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 28, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.translate('monthly_installment'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedMonthlyInstallment(l10n.isArabic),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 28, color: theme.dividerColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.translate('quarterly_installment'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        property.localizedQuarterlyInstallment(l10n.isArabic),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- PHOTO GALLERY SECTION (REPLACING VIRTUAL STAGING) ---
+
+  Widget _buildPhotoGallerySection(
+    BuildContext context,
+    PropertyEntity property,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    final roomLabels = l10n.isArabic
+        ? [
+            'الريسبشن الرئيسي البانورامي',
+            'غرفة النوم الماستر والأجنحة',
+            'المطبخ المودرن ومنطقة المعيشة',
+            'التراس الخارجي واللاندسكيب',
+          ]
+        : [
+            'Grand Reception',
+            'Master Suite & Bedrooms',
+            'Modern Kitchen & Living',
+            'Terrace & Landscape',
+          ];
+
+    final displayImages = property.images;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(
+            alpha: isDark ? 0.2 : 0.6,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.photo_library_rounded,
+                    color: primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.isArabic ? 'معرض صور ومساحات الوحدة' : 'Property Photo Gallery',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${displayImages.length} ${l10n.isArabic ? "صور عالية الدقة" : "HD Photos"}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Horizontal Carousel of real room spaces
+          SizedBox(
+            height: 190,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: displayImages.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final imgUrl = displayImages[index];
+                final label = index < roomLabels.length
+                    ? roomLabels[index]
+                    : (l10n.isArabic ? 'مساحة داخلية للوحدة' : 'Interior Space');
+
+                return GestureDetector(
+                  onTap: () {
+                    _showImageZoomDialog(context, imgUrl, label);
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: imgUrl,
+                          width: 250,
+                          height: 190,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 250,
+                            height: 190,
+                            color: isDark ? const Color(0xFF141C2B) : const Color(0xFFE8E5DD),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Gradient Overlay
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.75),
+                                ],
+                                stops: const [0.45, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Zoom Icon
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.fullscreen_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                        // Room Tag Label
+                        Positioned(
+                          bottom: 10,
+                          left: 12,
+                          right: 12,
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
