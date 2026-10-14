@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nestify/core/constants/app_typography.dart';
@@ -19,7 +20,7 @@ class ProfileSettingsView extends StatefulWidget {
 }
 
 class _ProfileSettingsViewState extends State<ProfileSettingsView> {
-  double _noiseTolerance = 38.0; // dB
+  int _preferredInstallmentYears = 8; // Preferred installment duration in Egypt
   String _selectedStyle = 'Minimalist Japandi';
 
   final List<String> _architecturalStyles = [
@@ -97,11 +98,16 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                               color: theme.colorScheme.primary,
                               width: 2,
                             ),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-                              ),
+                          ),
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl:
+                                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
                               fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => const Icon(
+                                Icons.person_rounded,
+                                size: 32,
+                              ),
                             ),
                           ),
                         ),
@@ -345,7 +351,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          l10n.translate('noise_tolerance'),
+                          l10n.isArabic ? 'سنوات التقسيط المفضلة' : 'Preferred Installment Years',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -353,7 +359,9 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                           ),
                         ),
                         Text(
-                          '${_noiseTolerance.round()} dB',
+                          l10n.isArabic
+                              ? '$_preferredInstallmentYears سنوات'
+                              : '$_preferredInstallmentYears Years',
                           style: AppTypography.priceTag.copyWith(
                             fontSize: 16,
                             color: theme.colorScheme.primary,
@@ -362,17 +370,17 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       ],
                     ),
                     Slider(
-                      value: _noiseTolerance,
-                      min: 25.0,
-                      max: 55.0,
-                      divisions: 30,
+                      value: _preferredInstallmentYears.toDouble(),
+                      min: 3.0,
+                      max: 10.0,
+                      divisions: 7,
                       activeColor: theme.colorScheme.primary,
                       inactiveColor: theme.colorScheme.outlineVariant.withValues(
                         alpha: isDark ? 0.2 : 0.6,
                       ),
                       onChanged: (val) {
                         setState(() {
-                          _noiseTolerance = val;
+                          _preferredInstallmentYears = val.round();
                         });
                       },
                     ),

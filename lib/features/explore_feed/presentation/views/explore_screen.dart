@@ -285,8 +285,9 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: BlocConsumer<ExploreFeedBloc, ExploreFeedState>(
           listener: (context, state) {
@@ -309,9 +310,9 @@ class ExploreScreen extends StatelessWidget {
                 // Card Stack Area
                 Expanded(
                   child: state.status == ExploreStatus.loading
-                      ? const Center(
+                      ? Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.neonCyan,
+                            color: theme.colorScheme.primary,
                           ),
                         )
                       : state.isDeckEmpty
@@ -331,54 +332,100 @@ class ExploreScreen extends StatelessWidget {
   }
 
   Widget _buildTopHeader(BuildContext context, ExploreFeedState state) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo & Branding
+          // Back Button + Logo & Branding
           Row(
             children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).maybePop(),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  margin: const EdgeInsetsDirectional.only(end: 10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF141C2B).withValues(alpha: 0.9)
+                        : Colors.white.withValues(alpha: 0.95),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : const Color(0xFFE5E0D8),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      isRtl
+                          ? Icons.arrow_forward_ios_rounded
+                          : Icons.arrow_back_ios_new_rounded,
+                      size: 16,
+                      color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                    ),
+                  ),
+                ),
+              ),
               Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  gradient: isDark
+                      ? AppColors.cyanGradient
+                      : const LinearGradient(
+                          colors: [Color(0xFFC5A880), Color(0xFFD4AF37)],
+                        ),
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.neonCyan.withValues(alpha: 0.35),
+                      color: primaryColor.withValues(alpha: 0.35),
                       blurRadius: 10,
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.home_work_rounded,
-                    color: AppColors.backgroundDark,
+                    color: isDark ? AppColors.backgroundDark : Colors.white,
                     size: 20,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'NESTIFY',
                     style: AppTypography.headlineLarge.copyWith(
-                      fontSize: 19,
-                      letterSpacing: 2.0,
+                      fontSize: 17,
+                      letterSpacing: 1.8,
                       fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : const Color(0xFF0F1B2B),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'PROPTECH DISCOVERY',
                     style: TextStyle(
-                      fontSize: 9,
-                      letterSpacing: 1.2,
+                      fontSize: 8.5,
+                      letterSpacing: 1.1,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.neonCyan,
+                      color: primaryColor,
                     ),
                   ),
                 ],
@@ -395,12 +442,12 @@ class ExploreScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceDarkElevated,
+                    color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF3F0EA),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: state.selectedNeighborhood != null
-                          ? AppColors.neonCyan
-                          : AppColors.borderLight,
+                          ? primaryColor
+                          : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5)),
                     ),
                   ),
                   child: Row(
@@ -409,18 +456,18 @@ class ExploreScreen extends StatelessWidget {
                         Icons.filter_list_rounded,
                         size: 14,
                         color: state.selectedNeighborhood != null
-                            ? AppColors.neonCyan
-                            : AppColors.textSecondary,
+                            ? primaryColor
+                            : (isDark ? AppColors.textSecondary : const Color(0xFF64748B)),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        state.selectedNeighborhood ?? 'All Hubs',
+                        state.selectedNeighborhood ?? (Directionality.of(context) == TextDirection.rtl ? 'كل المناطق' : 'All Hubs'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: state.selectedNeighborhood != null
-                              ? AppColors.neonCyan
-                              : AppColors.textPrimary,
+                              ? primaryColor
+                              : (isDark ? Colors.white : const Color(0xFF0F1B2B)),
                         ),
                       ),
                     ],
@@ -439,17 +486,17 @@ class ExploreScreen extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceDarkElevated,
+                        color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF3F0EA),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.borderLight,
+                          color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2DDD5),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.favorite_rounded,
                           size: 20,
-                          color: AppColors.neonCyan,
+                          color: primaryColor,
                         ),
                       ),
                     ),

@@ -37,6 +37,12 @@ class PropertyModel extends PropertyEntity {
     super.contactWhatsApp,
     super.category,
     super.currencySymbol,
+    super.finishing,
+    super.delivery,
+    super.maintenanceRatio,
+    super.offeringType,
+    super.cashDiscountPercent,
+    super.compoundName,
   });
 
   factory PropertyModel.fromJson(Map<String, dynamic> json) {
@@ -82,10 +88,16 @@ class PropertyModel extends PropertyEntity {
       isFurnished: json['isFurnished'] as bool? ?? false,
       rentalYieldPct: (json['rentalYieldPct'] as num?)?.toDouble() ?? 11.8,
       hasVirtualTour360: json['hasVirtualTour360'] as bool? ?? true,
-      contactPhone: json['contactPhone'] as String? ?? '+201009876543',
-      contactWhatsApp: json['contactWhatsApp'] as String? ?? '+201009876543',
+      contactPhone: json['contactPhone'] as String? ?? '+201206667376',
+      contactWhatsApp: json['contactWhatsApp'] as String? ?? '+201206667376',
       category: json['category'] as String? ?? 'apartment',
       currencySymbol: json['currencySymbol'] as String? ?? 'EGP',
+      finishing: json['finishing'] as String? ?? 'fully_finished',
+      delivery: json['delivery'] as String? ?? 'ready_to_move',
+      maintenanceRatio: (json['maintenanceRatio'] as num?)?.toDouble() ?? 0.08,
+      offeringType: json['offeringType'] as String? ?? 'primary',
+      cashDiscountPercent: (json['cashDiscountPercent'] as num?)?.toInt() ?? 25,
+      compoundName: json['compoundName'] as String? ?? 'Palm Hills',
     );
   }
 
@@ -125,6 +137,12 @@ class PropertyModel extends PropertyEntity {
       'contactWhatsApp': contactWhatsApp,
       'category': category,
       'currencySymbol': currencySymbol,
+      'finishing': finishing,
+      'delivery': delivery,
+      'maintenanceRatio': maintenanceRatio,
+      'offeringType': offeringType,
+      'cashDiscountPercent': cashDiscountPercent,
+      'compoundName': compoundName,
     };
   }
 
@@ -164,6 +182,12 @@ class PropertyModel extends PropertyEntity {
       contactWhatsApp: entity.contactWhatsApp,
       category: entity.category,
       currencySymbol: entity.currencySymbol,
+      finishing: entity.finishing,
+      delivery: entity.delivery,
+      maintenanceRatio: entity.maintenanceRatio,
+      offeringType: entity.offeringType,
+      cashDiscountPercent: entity.cashDiscountPercent,
+      compoundName: entity.compoundName,
     );
   }
 }

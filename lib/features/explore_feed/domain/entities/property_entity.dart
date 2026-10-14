@@ -41,6 +41,14 @@ class PropertyEntity extends Equatable {
   final String category; // 'villa', 'apartment', 'townhouse', 'studio', 'commercial'
   final String currencySymbol;
 
+  // Egyptian Real Estate Attributes
+  final String finishing; // 'core_and_shell', 'semi_finished', 'fully_finished', 'ultra_lux'
+  final String delivery; // 'ready_to_move', '2026', '2027', '2028'
+  final double maintenanceRatio; // e.g. 0.08 (8%)
+  final String offeringType; // 'primary' (من المطور مباشرة) or 'resale' (إعادة بيع)
+  final int cashDiscountPercent; // e.g. 25 (%)
+  final String compoundName;
+
   const PropertyEntity({
     required this.id,
     required this.title,
@@ -72,10 +80,16 @@ class PropertyEntity extends Equatable {
     this.isFurnished = false,
     this.rentalYieldPct = 11.8,
     this.hasVirtualTour360 = true,
-    this.contactPhone = '+201009876543',
-    this.contactWhatsApp = '+201009876543',
+    this.contactPhone = '+201206667376',
+    this.contactWhatsApp = '+201206667376',
     this.category = 'apartment',
     this.currencySymbol = 'EGP',
+    this.finishing = 'fully_finished',
+    this.delivery = 'ready_to_move',
+    this.maintenanceRatio = 0.08,
+    this.offeringType = 'primary',
+    this.cashDiscountPercent = 25,
+    this.compoundName = 'Palm Hills',
   });
 
   /// Formatted price with commas (e.g. 14,500,000 EGP)
@@ -145,6 +159,81 @@ class PropertyEntity extends Equatable {
     );
   }
 
+  /// Quarterly installment amount
+  double get quarterlyInstallmentPrice {
+    final effectiveMonthly = monthlyInstallmentPrice > 0
+        ? monthlyInstallmentPrice
+        : (price * 0.90) / (installmentYears * 12);
+    return effectiveMonthly * 3;
+  }
+
+  /// Formatted localized Quarterly installment
+  String localizedQuarterlyInstallment(bool isArabic) {
+    return AppLocalizations.formatPrice(
+      quarterlyInstallmentPrice,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
+  }
+
+  /// Cash price after upfront discount
+  double get cashPrice => price * (1.0 - (cashDiscountPercent / 100.0));
+
+  /// Formatted localized Cash Price
+  String localizedCashPrice(bool isArabic) {
+    return AppLocalizations.formatPrice(
+      cashPrice,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
+  }
+
+  /// Localized finishing condition
+  String localizedFinishing(bool isArabic) {
+    switch (finishing) {
+      case 'core_and_shell':
+        return isArabic ? 'بدون تشطيب (طوب أحمر)' : 'Core & Shell';
+      case 'semi_finished':
+        return isArabic ? 'نصف تشطيب (محارة)' : 'Semi-Finished';
+      case 'ultra_lux':
+        return isArabic ? 'ألترا سوبر لوكس' : 'Ultra Super Lux';
+      case 'fully_finished':
+      default:
+        return isArabic ? 'تشطيب كامل سوبر لوكس' : 'Fully Finished';
+    }
+  }
+
+  /// Localized delivery timeline
+  String localizedDelivery(bool isArabic) {
+    if (delivery == 'ready_to_move') {
+      return isArabic ? 'استلام فوري' : 'Ready to Move';
+    }
+    return isArabic ? 'استلام $delivery' : 'Delivery $delivery';
+  }
+
+  /// Localized offering type
+  String localizedOfferingType(bool isArabic) {
+    if (offeringType == 'resale') {
+      return isArabic ? 'إعادة بيع (Resale)' : 'Resale';
+    }
+    return isArabic ? 'من المطور مباشرة (Primary)' : 'Primary Developer';
+  }
+
+  /// Localized maintenance deposit
+  String localizedMaintenance(bool isArabic) {
+    final pct = (maintenanceRatio * 100).toInt();
+    final amount = price * maintenanceRatio;
+    final formattedAmt = AppLocalizations.formatPrice(
+      amount,
+      currencySymbol: currencySymbol == '\$' ? 'EGP' : currencySymbol,
+      isArabic: isArabic,
+      isMonthly: false,
+    );
+    return isArabic ? '$pct% ($formattedAmt)' : '$pct% ($formattedAmt)';
+  }
+
   String _formatNum(double numVal) {
     final str = numVal.toInt().toString();
     final buffer = StringBuffer();
@@ -204,5 +293,11 @@ class PropertyEntity extends Equatable {
         contactWhatsApp,
         category,
         currencySymbol,
+        finishing,
+        delivery,
+        maintenanceRatio,
+        offeringType,
+        cashDiscountPercent,
+        compoundName,
       ];
 }

@@ -8,6 +8,7 @@ import 'package:nestify/features/explore_feed/domain/entities/property_entity.da
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
 import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
+import 'package:nestify/features/marketplace/presentation/views/add_property_listing_screen.dart';
 
 /// PortfolioView provides a luxury wealth vault of favorited architecture
 /// and scheduled VIP private & spatial VR tours with countdown trackers.
@@ -105,18 +106,62 @@ class _PortfolioViewState extends State<PortfolioView>
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _isGridView = !_isGridView;
-                      });
-                    },
-                    icon: Icon(
-                      _isGridView
-                          ? Icons.view_list_rounded
-                          : Icons.grid_view_rounded,
-                      color: theme.colorScheme.primary,
-                    ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AddPropertyListingScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline_rounded,
+                                size: 14,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                l10n.isArabic ? 'أضف عقارك +' : 'List +',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _isGridView = !_isGridView;
+                          });
+                        },
+                        icon: Icon(
+                          _isGridView
+                              ? Icons.view_list_rounded
+                              : Icons.grid_view_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -824,6 +869,27 @@ class _PortfolioViewState extends State<PortfolioView>
                 ),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AddPropertyListingScreen(),
+              ),
+            );
+          },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: theme.colorScheme.primary,
+            side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          icon: const Icon(Icons.add_home_work_rounded, size: 20),
+          label: Text(
+            l10n.isArabic ? 'أضف عقارك الآن وادفع بالفيزا' : 'Add Property & Pay with Card',
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
       ],

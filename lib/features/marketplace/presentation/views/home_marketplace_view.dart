@@ -16,6 +16,8 @@ import 'package:nestify/core/theme/theme_bloc/theme_bloc.dart';
 import 'package:nestify/core/theme/theme_bloc/theme_event.dart';
 import 'package:nestify/core/theme/theme_bloc/theme_state.dart';
 import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
+import 'package:nestify/features/marketplace/presentation/views/category_properties_screen.dart';
+import 'package:nestify/features/marketplace/presentation/views/add_property_listing_screen.dart';
 
 /// HomeMarketplaceView is the flagship commercial real estate marketplace screen,
 /// rivaling Dubizzle and Property Finder with segmented sale/rent modes,
@@ -67,13 +69,13 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       'tenure': 'أقساط 7 سنوات',
     },
     {
-      'title': 'Emaar Marina Cove Towers',
-      'developer': 'Emaar Properties',
-      'tag': 'عائد استثماري 13.5% مضمون',
+      'title': 'Mountain View iCity Lagoon Beach',
+      'developer': 'ماونتن فيو للتنمية والاستثمار',
+      'tag': 'لاجون رملي خاص • تسليم 2027',
       'image':
           'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1000&q=80',
       'downPayment': '10% مقدم',
-      'tenure': 'أقساط 6 سنوات',
+      'tenure': 'أقساط 8 سنوات متساوية',
     },
   ];
 
@@ -94,8 +96,16 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
   List<PropertyEntity> get _filteredProperties {
     return _allProperties.where((p) {
       if (p.priceType != _transactionType) return false;
-      if (_selectedCategory != 'all' && p.category != _selectedCategory) {
-        return false;
+      if (_selectedCategory != 'all') {
+        if (_selectedCategory == 'apartments_sale' || _selectedCategory == 'apartments_rent') {
+          if (p.category != 'apartment') return false;
+        } else if (_selectedCategory == 'villas_sale' || _selectedCategory == 'villas_rent') {
+          if (p.category != 'villa' && p.category != 'townhouse') return false;
+        } else if (_selectedCategory == 'townhouses_sale') {
+          if (p.category != 'townhouse') return false;
+        } else if (p.category != _selectedCategory) {
+          return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -226,6 +236,49 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                                   ),
                                 );
                               },
+                            ),
+                            // Add Property Listing Flow
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const AddPropertyListingScreen(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 7,
+                                ),
+                                margin: const EdgeInsetsDirectional.only(end: 6),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: primaryColor.withValues(alpha: 0.5),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline_rounded,
+                                      size: 14,
+                                      color: primaryColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.isArabic ? 'أضف عقارك +' : 'List +',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                             // Switch to Tinder Swipe Deck Mode
                             GestureDetector(
@@ -383,9 +436,107 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                     ),
                   ),
                 ),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // 3.5 Promotional Banner: Add Listing & Card Payment
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AddPropertyListingScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFF1E2838), const Color(0xFF141C2B)]
+                                : [const Color(0xFFFAF7F2), const Color(0xFFF3EFE8)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.35),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.18),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.add_home_work_rounded,
+                                color: primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.isArabic
+                                        ? 'هل ترغب ببيع أو تأجير عقارك؟'
+                                        : 'Looking to Sell or Rent?',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+                                    ),
+                                  ),
+                                  Text(
+                                    l10n.isArabic
+                                        ? 'انشر إعلانك الآن وادفع بالفيزا مع باقات تمييز حصرية'
+                                        : 'Publish listing instantly with Visa & featured tiers',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                l10n.isArabic ? 'أضف الآن +' : 'Add +',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? const Color(0xFF0B0E14) : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
-                // 4. Category Pills Horizontal Rail
+                // 4. Category Pills Horizontal Rail (شقق للبيع، شقق للإيجار، فلل للبيع، فلل للإيجار)
                 SliverToBoxAdapter(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -395,32 +546,38 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                       children: [
                         _buildCategoryPill(
                           id: 'all',
-                          label: l10n.translate('cat_all'),
+                          label: l10n.isArabic ? 'الكل' : 'All',
                           icon: Icons.dashboard_outlined,
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryPill(
-                          id: 'villa',
-                          label: l10n.translate('cat_villas'),
-                          icon: Icons.villa_outlined,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildCategoryPill(
-                          id: 'apartment',
-                          label: l10n.translate('cat_apartments'),
+                          id: 'apartments_sale',
+                          label: l10n.isArabic ? 'شقق للبيع' : 'Apartments for Sale',
                           icon: Icons.apartment_rounded,
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryPill(
-                          id: 'townhouse',
-                          label: l10n.translate('cat_townhouse'),
-                          icon: Icons.holiday_village_outlined,
+                          id: 'apartments_rent',
+                          label: l10n.isArabic ? 'شقق للإيجار' : 'Apartments for Rent',
+                          icon: Icons.key_rounded,
                         ),
                         const SizedBox(width: 8),
                         _buildCategoryPill(
-                          id: 'studio',
-                          label: l10n.translate('cat_studios'),
-                          icon: Icons.single_bed_outlined,
+                          id: 'villas_sale',
+                          label: l10n.isArabic ? 'فلل للبيع' : 'Villas for Sale',
+                          icon: Icons.villa_outlined,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryPill(
+                          id: 'villas_rent',
+                          label: l10n.isArabic ? 'فلل للإيجار' : 'Villas for Rent',
+                          icon: Icons.pool_rounded,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildCategoryPill(
+                          id: 'townhouses_sale',
+                          label: l10n.isArabic ? 'تاون هاوس' : 'Townhouses',
+                          icon: Icons.holiday_village_outlined,
                         ),
                       ],
                     ),
@@ -785,7 +942,19 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       ),
       selected: isSelected,
       onSelected: (val) {
-        if (val) setState(() => _selectedCategory = id);
+        if (id == 'all') {
+          setState(() => _selectedCategory = 'all');
+        } else {
+          setState(() => _selectedCategory = id);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => CategoryPropertiesScreen(
+                categoryKey: id,
+                customTitle: label,
+              ),
+            ),
+          );
+        }
       },
       selectedColor: primaryColor.withValues(alpha: 0.18),
       backgroundColor: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF0EDE6),
@@ -808,27 +977,35 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       width: 290,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        image: DecorationImage(
-          image: NetworkImage(launch['image']),
-          fit: BoxFit.cover,
-        ),
+        color: const Color(0xFF141C2B),
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.85),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CachedNetworkImage(
+              imageUrl: launch['image'],
+              fit: BoxFit.cover,
+              errorWidget: (context, url, error) => Container(
+                color: const Color(0xFF1B2433),
+                child: const Center(
+                  child: Icon(Icons.apartment_rounded, color: Colors.white24, size: 48),
+                ),
               ),
             ),
-          ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.85),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
           Positioned(
             top: 12,
             right: 12,
@@ -878,12 +1055,16 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      '${launch['downPayment']} • ${launch['tenure']}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        '${launch['downPayment']} • ${launch['tenure']}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -893,8 +1074,9 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHotDealCard(PropertyEntity property, AppLocalizations l10n) {
     final theme = Theme.of(context);
@@ -1270,38 +1452,79 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                   // Commercial Price & Payment Plan
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(
-                        property.formattedPrice,
-                        style: AppTypography.priceTag.copyWith(
-                          fontSize: 22,
-                          color: primaryColor,
-                        ),
-                      ),
-                      if (property.priceType == 'buy') ...[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                      // Total Price & Cash discount
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${l10n.translate('down_payment')}: ${property.formattedDownPayment}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.secondary,
-                              ),
-                            ),
-                            Text(
-                              '${l10n.translate('monthly_installment')}: ${property.formattedMonthlyInstallment}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? AppColors.textSecondary
-                                    : const Color(0xFF64748B),
-                              ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    property.localizedPrice(l10n.isArabic),
+                                    style: AppTypography.priceTag.copyWith(
+                                      fontSize: 19,
+                                      color: primaryColor,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    l10n.isArabic
+                                        ? 'خصم ${property.cashDiscountPercent}% كاش'
+                                        : '${property.cashDiscountPercent}% Cash Off',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Down payment & installment
+                      if (property.priceType == 'buy') ...[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${l10n.translate('down_payment')}: ${property.localizedDownPayment(l10n.isArabic)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.colorScheme.secondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                '${l10n.translate('monthly_installment')}: ${property.localizedMonthlyInstallment(l10n.isArabic)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ] else ...[
                         Container(
@@ -1327,79 +1550,93 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-                  // Micro-Specs Pill Row
-                  Row(
-                    children: [
-                      _buildSpecPill(
-                        Icons.bed_outlined,
-                        '${property.bedrooms} ${l10n.translate('beds')}',
-                      ),
-                      const SizedBox(width: 6),
-                      _buildSpecPill(
-                        Icons.bathtub_outlined,
-                        '${property.bathrooms} ${l10n.translate('baths')}',
-                      ),
-                      const SizedBox(width: 6),
-                      _buildSpecPill(
-                        Icons.square_foot_rounded,
-                        '${property.areaSqm} ${l10n.translate('sqm')}',
-                      ),
-                      const Spacer(),
-                      // Compare Toggle Button
-                      GestureDetector(
-                        onTap: () => _toggleCompare(property),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isComparing
-                                ? primaryColor
-                                : (isDark
-                                    ? AppColors.surfaceDarkElevated
-                                    : const Color(0xFFF4F0E8)),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
+                  // Micro-Specs Pill Row (Scrollable to prevent any flex overflow)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        _buildSpecPill(
+                          Icons.bed_outlined,
+                          '${property.bedrooms} ${l10n.translate('beds')}',
+                        ),
+                        const SizedBox(width: 6),
+                        _buildSpecPill(
+                          Icons.bathtub_outlined,
+                          '${property.bathrooms} ${l10n.translate('baths')}',
+                        ),
+                        const SizedBox(width: 6),
+                        _buildSpecPill(
+                          Icons.square_foot_rounded,
+                          '${property.areaSqm} ${l10n.translate('sqm')}',
+                        ),
+                        const SizedBox(width: 6),
+                        _buildSpecPill(
+                          Icons.architecture_rounded,
+                          property.localizedFinishing(l10n.isArabic),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildSpecPill(
+                          Icons.event_available_rounded,
+                          property.localizedDelivery(l10n.isArabic),
+                        ),
+                        const SizedBox(width: 8),
+                        // Compare Toggle Button
+                        GestureDetector(
+                          onTap: () => _toggleCompare(property),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
                               color: isComparing
                                   ? primaryColor
                                   : (isDark
-                                      ? Colors.white24
-                                      : theme.colorScheme.outlineVariant),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.compare_arrows_rounded,
-                                size: 13,
+                                      ? AppColors.surfaceDarkElevated
+                                      : const Color(0xFFF4F0E8)),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
                                 color: isComparing
-                                    ? (isDark
-                                        ? AppColors.backgroundDark
-                                        : Colors.white)
-                                    : primaryColor,
+                                    ? primaryColor
+                                    : (isDark
+                                        ? Colors.white24
+                                        : theme.colorScheme.outlineVariant),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                l10n.translate('select_to_compare'),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.compare_arrows_rounded,
+                                  size: 13,
                                   color: isComparing
                                       ? (isDark
                                           ? AppColors.backgroundDark
                                           : Colors.white)
-                                      : theme.colorScheme.onSurface,
+                                      : primaryColor,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.translate('select_to_compare'),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: isComparing
+                                        ? (isDark
+                                            ? AppColors.backgroundDark
+                                            : Colors.white)
+                                        : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 14),
 

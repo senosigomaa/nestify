@@ -9,9 +9,9 @@ import 'package:nestify/features/explore_feed/domain/entities/property_entity.da
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_event.dart';
 
-/// InteractiveBookingSheet provides a commercial-grade VIP booking experience
-/// allowing clients to reserve physical private tours or Apple Vision Pro spatial VR walkthroughs,
-/// with luxury chauffeur escort options.
+/// InteractiveBookingSheet provides a luxury VIP booking experience
+/// supporting both Nordic Light and Obsidian Dark modes, with full Arabic & English localization.
+/// Allows clients to schedule private in-person tours or Apple Vision Pro spatial VR walkthroughs.
 class InteractiveBookingSheet extends StatefulWidget {
   final PropertyEntity property;
 
@@ -40,17 +40,30 @@ class InteractiveBookingSheet extends StatefulWidget {
 class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
   bool _isVrTour = false;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
-  String _selectedSlot = '11:00 AM (Midday Light)';
+  late String _selectedSlot;
   bool _requestChauffeur = true;
   bool _requestVrKit = false;
   bool _isConfirmed = false;
 
-  final List<String> _timeSlots = [
+  final List<String> _timeSlotsAr = [
+    'صباحاً (شروق هادئ) ٠٩:٣٠',
+    'ظهراً (إضاءة كاملة) ١١:٠٠',
+    'عصراً (الغروب الذهبي) ٠٤:٣٠',
+    'مساءً (أضواء الليل) ٠٨:٠٠',
+  ];
+
+  final List<String> _timeSlotsEn = [
     '09:30 AM (Morning Dawn)',
     '11:00 AM (Midday Light)',
-    '02:30 PM (Afternoon Sun)',
-    '05:30 PM (Golden Hour)',
+    '04:30 PM (Golden Hour)',
+    '08:00 PM (Evening Lights)',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSlot = _timeSlotsAr[1];
+  }
 
   void _onConfirm() {
     context.read<ExploreFeedBloc>().add(
@@ -67,6 +80,21 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final containerBg = isDark
+        ? const Color(0xFF141C2B).withValues(alpha: 0.98)
+        : Colors.white.withValues(alpha: 0.98);
+
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : const Color(0xFFE5E0D8);
+
+    final timeSlots = l10n.isArabic ? _timeSlotsAr : _timeSlotsEn;
+    if (!timeSlots.contains(_selectedSlot)) {
+      _selectedSlot = timeSlots[1];
+    }
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -80,22 +108,38 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             MediaQuery.of(context).padding.bottom + 24,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDark.withValues(alpha: 0.96),
+            color: containerBg,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(color: AppColors.borderLight, width: 1.2),
+            border: Border.all(color: borderColor, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                blurRadius: 28,
+                offset: const Offset(0, -6),
+              ),
+            ],
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 350),
             child: _isConfirmed
-                ? _buildConfirmationView(l10n)
-                : _buildFormView(l10n),
+                ? _buildConfirmationView(l10n, theme, isDark)
+                : _buildFormView(l10n, theme, isDark, timeSlots),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildFormView(AppLocalizations l10n) {
+  Widget _buildFormView(
+    AppLocalizations l10n,
+    ThemeData theme,
+    bool isDark,
+    List<String> timeSlots,
+  ) {
+    final primaryColor = theme.colorScheme.primary;
+    final titleColor = isDark ? Colors.white : const Color(0xFF0F1B2B);
+    final descColor = isDark ? AppColors.textSecondary : const Color(0xFF475569);
+
     return Column(
       key: const ValueKey('form_view'),
       mainAxisSize: MainAxisSize.min,
@@ -107,7 +151,9 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.25)
+                  : const Color(0xFFCBD5E1),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -119,26 +165,29 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           l10n.translate('book_tour_title'),
           style: AppTypography.headlineMedium.copyWith(
             fontWeight: FontWeight.w800,
+            color: titleColor,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           '${widget.property.title} • ${widget.property.neighborhood}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.neonCyan,
+            fontWeight: FontWeight.w700,
+            color: primaryColor,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 16),
 
-        // 1. Tour Format Selector (Physical vs VR)
+        // 1. Tour Format Selector (In-Person VIP vs Spatial VR)
         Text(
           l10n.translate('tour_mode'),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+            color: descColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -147,18 +196,22 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             Expanded(
               child: _buildModeSelector(
                 icon: Icons.person_pin_circle_outlined,
-                title: l10n.translate('mode_physical'),
+                title: l10n.isArabic ? 'معاينة ميدانية VIP' : 'IN-PERSON VIP',
                 isSelected: !_isVrTour,
                 onTap: () => setState(() => _isVrTour = false),
+                theme: theme,
+                isDark: isDark,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildModeSelector(
                 icon: Icons.view_in_ar_rounded,
-                title: l10n.translate('mode_vr'),
+                title: l10n.isArabic ? 'جولة واقع افتراضي (VR)' : 'SPATIAL VR TOUR',
                 isSelected: _isVrTour,
                 onTap: () => setState(() => _isVrTour = true),
+                theme: theme,
+                isDark: isDark,
               ),
             ),
           ],
@@ -171,10 +224,10 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           children: [
             Text(
               l10n.translate('select_date'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: descColor,
               ),
             ),
             GestureDetector(
@@ -185,12 +238,7 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
                   firstDate: DateTime.now(),
                   lastDate: DateTime.now().add(const Duration(days: 60)),
                   builder: (context, child) => Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.dark(
-                        primary: AppColors.neonCyan,
-                        surface: AppColors.surfaceDark,
-                      ),
-                    ),
+                    data: Theme.of(context),
                     child: child!,
                   ),
                 );
@@ -200,25 +248,30 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
               },
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.neonCyan.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: isDark ? 0.4 : 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_rounded,
                       size: 13,
-                      color: AppColors.neonCyan,
+                      color: primaryColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
+                      l10n.isArabic
+                          ? '${AppLocalizations.convertToArabicDigits(_selectedDate.year)}-${AppLocalizations.convertToArabicDigits(_selectedDate.month.toString().padLeft(2, '0'))}-${AppLocalizations.convertToArabicDigits(_selectedDate.day.toString().padLeft(2, '0'))}'
+                          : '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.neonCyan,
+                        color: primaryColor,
                       ),
                     ),
                   ],
@@ -234,7 +287,7 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
-            children: _timeSlots.map((slot) {
+            children: timeSlots.map((slot) {
               final isSelected = slot == _selectedSlot;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -244,19 +297,23 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
                   onSelected: (val) {
                     if (val) setState(() => _selectedSlot = slot);
                   },
-                  selectedColor: AppColors.amberGold.withValues(alpha: 0.2),
-                  backgroundColor: AppColors.surfaceDarkElevated,
+                  selectedColor: primaryColor.withValues(alpha: isDark ? 0.22 : 0.18),
+                  backgroundColor: isDark
+                      ? const Color(0xFF1E2838)
+                      : const Color(0xFFF3F0EA),
                   labelStyle: TextStyle(
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected
-                        ? AppColors.amberGold
-                        : AppColors.textSecondary,
+                        ? (isDark ? primaryColor : const Color(0xFF0F1B2B))
+                        : (isDark ? AppColors.textSecondary : const Color(0xFF64748B)),
                   ),
                   side: BorderSide(
                     color: isSelected
-                        ? AppColors.amberGold
-                        : Colors.white.withValues(alpha: 0.08),
+                        ? primaryColor
+                        : (isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : const Color(0xFFE2DDD5)),
                   ),
                 ),
               );
@@ -269,18 +326,30 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
         if (!_isVrTour) ...[
           _buildAddonSwitch(
             icon: Icons.directions_car_filled_rounded,
-            title: l10n.translate('chauffeur_option'),
-            subtitle: l10n.translate('chauffeur_desc'),
+            title: l10n.isArabic
+                ? 'مرافقة سيارة فاخرة وسائق VIP'
+                : 'Luxury Chauffeur Escort',
+            subtitle: l10n.isArabic
+                ? 'توصيل بسيارة مرسيدس EQS أو لوسيد إير من موقعك'
+                : 'Mercedes EQS private transfer to compound',
             value: _requestChauffeur,
             onChanged: (val) => setState(() => _requestChauffeur = val),
+            theme: theme,
+            isDark: isDark,
           ),
         ] else ...[
           _buildAddonSwitch(
             icon: Icons.headset_mic_rounded,
-            title: l10n.translate('vr_kit_option'),
-            subtitle: l10n.translate('vr_kit_desc'),
+            title: l10n.isArabic
+                ? 'توصيل طقم نظارة الواقع الافتراضي'
+                : 'Spatial VR Headset Delivery',
+            subtitle: l10n.isArabic
+                ? 'توصيل نظارة Apple Vision Pro مهيأة إلى مكان إقامتك'
+                : 'Dispatched to your residence before the tour',
             value: _requestVrKit,
             onChanged: (val) => setState(() => _requestVrKit = val),
+            theme: theme,
+            isDark: isDark,
           ),
         ],
         const SizedBox(height: 22),
@@ -289,15 +358,41 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
             onPressed: _onConfirm,
-            child: Text(l10n.translate('confirm_booking')),
+            child: Text(
+              l10n.translate('confirm_booking'),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildConfirmationView(AppLocalizations l10n) {
+  Widget _buildConfirmationView(
+    AppLocalizations l10n,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final primaryColor = theme.colorScheme.primary;
+    final titleColor = isDark ? Colors.white : const Color(0xFF0F1B2B);
+
+    final tourFormat = _isVrTour
+        ? (l10n.isArabic ? 'جولة واقع افتراضي (VR)' : 'Spatial VR Tour')
+        : (l10n.isArabic ? 'معاينة ميدانية VIP' : 'In-Person VIP Tour');
+
     return Column(
       key: const ValueKey('confirmed_view'),
       mainAxisSize: MainAxisSize.min,
@@ -308,19 +403,19 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           height: 72,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.neonCyan.withValues(alpha: 0.15),
-            border: Border.all(color: AppColors.neonCyan, width: 2),
+            color: primaryColor.withValues(alpha: 0.15),
+            border: Border.all(color: primaryColor, width: 2),
             boxShadow: [
               BoxShadow(
-                color: AppColors.neonCyan.withValues(alpha: 0.3),
+                color: primaryColor.withValues(alpha: 0.3),
                 blurRadius: 18,
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.check_rounded,
-              color: AppColors.neonCyan,
+              color: primaryColor,
               size: 40,
             ),
           ),
@@ -330,35 +425,58 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           l10n.translate('booking_confirmed'),
           style: AppTypography.headlineMedium.copyWith(
             fontWeight: FontWeight.w700,
+            color: titleColor,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDarkElevated,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderLight),
+            color: isDark
+                ? const Color(0xFF1E2838)
+                : const Color(0xFFFBF9F5),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFE5E0D8),
+            ),
           ),
           child: Column(
             children: [
               _buildSummaryRow(
-                'Tour Format',
-                _isVrTour ? 'Immersive Spatial VR' : 'In-Person VIP Tour',
+                l10n.isArabic ? 'نوع الجولة' : 'Tour Format',
+                tourFormat,
+                isDark,
               ),
               const Divider(height: 16),
               _buildSummaryRow(
-                'Date & Time',
-                '${_selectedDate.month}/${_selectedDate.day} @ $_selectedSlot',
+                l10n.isArabic ? 'التاريخ والوقت' : 'Date & Time',
+                l10n.isArabic
+                    ? '${AppLocalizations.convertToArabicDigits(_selectedDate.month)}/${AppLocalizations.convertToArabicDigits(_selectedDate.day)} • $_selectedSlot'
+                    : '${_selectedDate.month}/${_selectedDate.day} @ $_selectedSlot',
+                isDark,
               ),
               if (_requestChauffeur && !_isVrTour) ...[
                 const Divider(height: 16),
-                _buildSummaryRow('Escort', 'Mercedes EQS Chauffeur Confirmed'),
+                _buildSummaryRow(
+                  l10n.isArabic ? 'المرافقة الفاخرة' : 'Escort',
+                  l10n.isArabic
+                      ? 'مرسيدس EQS بسائق خاص معتمدة'
+                      : 'Mercedes EQS Chauffeur Confirmed',
+                  isDark,
+                ),
               ],
               if (_requestVrKit && _isVrTour) ...[
                 const Divider(height: 16),
-                _buildSummaryRow('Spatial Kit', 'Vision Pro Dispatched to Residence'),
+                _buildSummaryRow(
+                  l10n.isArabic ? 'طقم الواقع الافتراضي' : 'Spatial Kit',
+                  l10n.isArabic
+                      ? 'إرسال Apple Vision Pro لمقر إقامتك'
+                      : 'Vision Pro Dispatched to Residence',
+                  isDark,
+                ),
               ],
             ],
           ),
@@ -367,8 +485,20 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: isDark ? const Color(0xFF0B0E14) : Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
+            child: Text(
+              l10n.isArabic ? 'تم / العودة للوحدة' : 'Done',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
           ),
         ),
       ],
@@ -380,21 +510,31 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
     required String title,
     required bool isSelected,
     required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isDark,
   }) {
+    final primaryColor = theme.colorScheme.primary;
+    final cardBg = isDark
+        ? const Color(0xFF1E2838)
+        : const Color(0xFFFBF9F5);
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.neonCyan.withValues(alpha: 0.15)
-              : AppColors.surfaceDarkElevated,
+              ? primaryColor.withValues(alpha: isDark ? 0.22 : 0.14)
+              : cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.neonCyan
-                : Colors.white.withValues(alpha: 0.08),
-            width: 1.5,
+                ? primaryColor
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : const Color(0xFFE5E0D8)),
+            width: isSelected ? 1.6 : 1.0,
           ),
         ),
         child: Row(
@@ -402,7 +542,9 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? AppColors.neonCyan : AppColors.textSecondary,
+              color: isSelected
+                  ? primaryColor
+                  : (isDark ? AppColors.textSecondary : const Color(0xFF64748B)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -410,10 +552,13 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
                 title,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color:
-                      isSelected ? AppColors.neonCyan : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? (isDark ? primaryColor : const Color(0xFF0F1B2B))
+                      : (isDark ? Colors.white : const Color(0xFF334155)),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -428,19 +573,30 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required ThemeData theme,
+    required bool isDark,
   }) {
+    final primaryColor = theme.colorScheme.primary;
+    final cardBg = isDark
+        ? const Color(0xFF1E2838)
+        : const Color(0xFFFBF9F5);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDarkElevated,
-        borderRadius: BorderRadius.circular(14),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: value ? AppColors.borderCyan : AppColors.borderLight,
+          color: value
+              ? primaryColor.withValues(alpha: 0.6)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFE5E0D8)),
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.neonCyan, size: 20),
+          Icon(icon, color: primaryColor, size: 22),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -448,17 +604,18 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: isDark ? Colors.white : const Color(0xFF0F1B2B),
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -466,7 +623,7 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
           ),
           Switch(
             value: value,
-            activeThumbColor: AppColors.neonCyan,
+            activeThumbColor: primaryColor,
             onChanged: onChanged,
           ),
         ],
@@ -474,20 +631,28 @@ class _InteractiveBookingSheetState extends State<InteractiveBookingSheet> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(String label, String value, bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.textSecondary : const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF0F1B2B),
+            ),
           ),
         ),
       ],

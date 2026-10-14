@@ -27,9 +27,9 @@ class _InteractiveMapHubViewState extends State<InteractiveMapHubView> {
   PropertyEntity? _selectedProperty;
 
   // Active Map Filter toggles
-  bool _filterQuiet = false; // < 40 dB
-  bool _filterCoffee = false; // <= 2 mins
-  bool _filterMetro = false; // <= 8 mins
+  bool _filterReadyToMove = false;
+  bool _filterPrimary = false;
+  bool _filterFullyFinished = false;
 
   // Egyptian Real Estate Centers: New Cairo & Sheikh Zayed
   static const LatLng _newCairoCenter = LatLng(30.0131, 31.4913);
@@ -87,9 +87,12 @@ class _InteractiveMapHubViewState extends State<InteractiveMapHubView> {
 
   List<PropertyEntity> get _filteredProperties {
     return _allProperties.where((p) {
-      if (_filterQuiet && p.noiseLevelDb >= 40) return false;
-      if (_filterCoffee && p.coffeeShopProximityMins > 2) return false;
-      if (_filterMetro && p.commuteTechHubMins > 8) return false;
+      if (_filterReadyToMove && p.delivery != 'ready_to_move') return false;
+      if (_filterPrimary && p.offeringType != 'primary') return false;
+      if (_filterFullyFinished &&
+          (p.finishing != 'fully_finished' && p.finishing != 'ultra_lux')) {
+        return false;
+      }
       return true;
     }).toList();
   }
@@ -301,29 +304,29 @@ class _InteractiveMapHubViewState extends State<InteractiveMapHubView> {
                     child: Row(
                       children: [
                         _buildFilterChip(
-                          icon: Icons.volume_off_rounded,
-                          label: l10n.translate('filter_quiet'),
-                          isActive: _filterQuiet,
+                          icon: Icons.flash_on_rounded,
+                          label: l10n.isArabic ? 'استلام فوري' : 'Ready to Move',
+                          isActive: _filterReadyToMove,
                           onTap: () => setState(
-                              () => _filterQuiet = !_filterQuiet),
+                              () => _filterReadyToMove = !_filterReadyToMove),
                           isDark: isDark,
                         ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
-                          icon: Icons.coffee_rounded,
-                          label: l10n.translate('filter_coffee'),
-                          isActive: _filterCoffee,
+                          icon: Icons.business_rounded,
+                          label: l10n.isArabic ? 'من المطور مباشرة' : 'Direct Developer',
+                          isActive: _filterPrimary,
                           onTap: () => setState(
-                              () => _filterCoffee = !_filterCoffee),
+                              () => _filterPrimary = !_filterPrimary),
                           isDark: isDark,
                         ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
-                          icon: Icons.subway_rounded,
-                          label: l10n.translate('filter_metro'),
-                          isActive: _filterMetro,
+                          icon: Icons.architecture_rounded,
+                          label: l10n.isArabic ? 'تشطيب كامل' : 'Fully Finished',
+                          isActive: _filterFullyFinished,
                           onTap: () => setState(
-                              () => _filterMetro = !_filterMetro),
+                              () => _filterFullyFinished = !_filterFullyFinished),
                           isDark: isDark,
                         ),
                       ],
@@ -536,20 +539,30 @@ class _InteractiveMapHubViewState extends State<InteractiveMapHubView> {
                       child: Row(
                         children: [
                           _buildMetricChip(
-                            Icons.volume_down_rounded,
-                            '${property.noiseLevelDb} dB',
+                            Icons.architecture_rounded,
+                            property.localizedFinishing(l10n.isArabic),
                             isDark,
                           ),
                           const SizedBox(width: 6),
                           _buildMetricChip(
-                            Icons.coffee_rounded,
-                            '${property.coffeeShopProximityMins} ${l10n.translate('mins')}',
+                            Icons.event_available_rounded,
+                            property.localizedDelivery(l10n.isArabic),
                             isDark,
                           ),
                           const SizedBox(width: 6),
                           _buildMetricChip(
-                            Icons.trending_up_rounded,
-                            '${property.rentalYieldPct}% ROI',
+                            Icons.calendar_today_rounded,
+                            l10n.isArabic
+                                ? '${property.installmentYears} سنوات أقساط'
+                                : '${property.installmentYears} Yrs Plan',
+                            isDark,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildMetricChip(
+                            Icons.local_offer_rounded,
+                            l10n.isArabic
+                                ? 'خصم ${property.cashDiscountPercent}% كاش'
+                                : '${property.cashDiscountPercent}% Cash Off',
                             isDark,
                           ),
                         ],

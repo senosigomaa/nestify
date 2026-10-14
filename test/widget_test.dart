@@ -19,21 +19,21 @@ void main() {
       final model = PropertyModel.fromJson(raw);
 
       expect(model.id, 'prop_001');
-      expect(model.title, 'Palm Hills Sky Penthouse (بنتهاوس بالم هيلز)');
+      expect(model.title, 'بنتهاوس فاخر في بالم هيلز (Sky Penthouse)');
       expect(model.vibeMatchPercentage, 98);
-      expect(model.noiseLevelDb, 34);
-      expect(model.formattedPrice, '1,450,000 EGP');
-      expect(model.pricePerSqFt, closeTo(1450000 / 2450, 0.01));
-      expect(model.developerName, 'Palm Hills Developments');
+      expect(model.price, 14500000.0);
+      expect(model.downPaymentPrice, 1450000.0);
+      expect(model.installmentYears, 8);
+      expect(model.finishing, 'fully_finished');
+      expect(model.delivery, 'ready_to_move');
+      expect(model.cashDiscountPercent, 25);
       expect(model.rentalYieldPct, 12.8);
       expect(model.hasVirtualTour360, isTrue);
-      expect(model.styleVariants.containsKey('Minimalist Japandi'), isTrue);
-      expect(model.styleVariants.containsKey('Cyberpunk Loft'), isTrue);
 
       final json = model.toJson();
       expect(json['id'], 'prop_001');
-      expect(json['price'], 1450000.0);
-      expect(json['developerName'], 'Palm Hills Developments');
+      expect(json['price'], 14500000.0);
+      expect(json['cashDiscountPercent'], 25);
     });
 
     test('CoLivingBloc calculates down payments and monthly splits correctly', () async {

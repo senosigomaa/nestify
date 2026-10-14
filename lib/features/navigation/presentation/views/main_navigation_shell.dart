@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nestify/core/constants/app_colors.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
-import 'package:nestify/features/co_living/presentation/views/co_invest_roommate_hub_view.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
 import 'package:nestify/features/map_hub/presentation/views/interactive_map_hub_view.dart';
 import 'package:nestify/features/marketplace/presentation/views/home_marketplace_view.dart';
+import 'package:nestify/features/mortgage_planner/presentation/views/mortgage_planner_view.dart';
 import 'package:nestify/features/portfolio/presentation/views/portfolio_view.dart';
 import 'package:nestify/features/profile/presentation/views/profile_settings_view.dart';
 
 /// MainNavigationShell provides the persistent glassmorphic navigation shell
-/// uniting Marketplace, Interactive Map, Co-Invest Hub, Portfolio, and Profile.
+/// uniting Marketplace, Interactive Map, Egyptian Mortgage Planner, Portfolio, and Profile.
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
@@ -26,7 +26,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _destinations = const [
     HomeMarketplaceView(),
     InteractiveMapHubView(),
-    CoInvestRoommateHubView(),
+    EgyptianMortgagePlannerView(),
     PortfolioView(),
     ProfileSettingsView(),
   ];
@@ -101,8 +101,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           _buildNavItem(
                             context: context,
                             index: 2,
-                            icon: Icons.group_work_rounded,
-                            label: l10n.translate('nav_coliving'),
+                            icon: Icons.calculate_rounded,
+                            label: l10n.translate('nav_mortgage_planner'),
                           ),
                           _buildNavItem(
                             context: context,

@@ -6,10 +6,9 @@ import 'package:nestify/features/explore_feed/domain/entities/property_entity.da
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_bloc.dart';
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_event.dart';
 import 'package:nestify/features/explore_feed/presentation/widgets/match_score_badge.dart';
-import 'package:nestify/features/co_living/presentation/widgets/smart_split_calculator.dart';
-import 'package:nestify/features/vibe_radar/presentation/widgets/vibe_radar_sheet.dart';
 import 'package:nestify/core/localization/app_localizations.dart';
 import 'package:nestify/features/marketplace/presentation/widgets/direct_connect_buttons.dart';
+import '../widgets/egyptian_payment_plan_slider.dart';
 import '../widgets/sun_path_simulator.dart';
 import '../widgets/virtual_style_switcher.dart';
 import '../widgets/investment_roi_calculator.dart';
@@ -273,104 +272,193 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                             const SizedBox(width: 8),
                             _buildSpecChip(
                               Icons.square_foot_rounded,
-                              l10n.isArabic
-                                  ? '${property.areaSqm} ${l10n.translate('sqm')}'
-                                  : '${property.squareFeet} ${l10n.translate('sqft')}',
+                              '${property.areaSqm} ${l10n.translate('sqm')}',
                             ),
                             const SizedBox(width: 8),
                             _buildSpecChip(
-                              Icons.graphic_eq_rounded,
-                              '${property.noiseLevelDb} ${l10n.translate('noise')}',
+                              Icons.architecture_rounded,
+                              property.localizedFinishing(l10n.isArabic),
                               color: theme.colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
                             _buildSpecChip(
-                              Icons.wb_sunny_outlined,
-                              property.sunOrientation,
+                              Icons.event_available_rounded,
+                              property.localizedDelivery(l10n.isArabic),
                               color: theme.colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSpecChip(
+                              Icons.verified_user_outlined,
+                              property.localizedOfferingType(l10n.isArabic),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSpecChip(
+                              Icons.shield_outlined,
+                              '${l10n.translate('maintenance_fee')}: ${(property.maintenanceRatio * 100).toInt()}%',
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 22),
 
-                      // Vibe Radar Teaser Card
-                      GestureDetector(
-                        onTap: () => VibeRadarSheet.show(context, property),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isDark
-                                  ? [
-                                      const Color(0x3300E5FF),
-                                      const Color(0x1A141C2B),
-                                    ]
-                                  : [
-                                      const Color(0xFFF7F5F0),
-                                      Colors.white,
-                                    ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                            ),
+                      // Authentic Egyptian Payment & Pricing Overview Card
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF141C2B) : const Color(0xFFF7F5EE),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                            width: 1.2,
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  l10n.translate('total_price'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.radar_rounded,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    l10n.isArabic
+                                        ? 'خصم ${property.cashDiscountPercent}% للكاش'
+                                        : '${property.cashDiscountPercent}% Cash Off',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                property.localizedPrice(l10n.isArabic),
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
                                   color: theme.colorScheme.primary,
-                                  size: 24,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.translate('acoustic_diagnostic'),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: theme.colorScheme.onSurface,
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.translate('down_payment'),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${property.noiseLevelDb} dB • ${property.coffeeShopProximityMins} ${l10n.translate('mins_walk')} • ${property.commuteTechHubMins} ${l10n.isArabic ? "د لمراكز الأعمال" : "m to tech hub"}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                      const SizedBox(height: 2),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          property.localizedDownPayment(l10n.isArabic),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 14,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ],
-                          ),
+                                Container(width: 1, height: 28, color: theme.dividerColor),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.translate('monthly_installment'),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          property.localizedMonthlyInstallment(l10n.isArabic),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: theme.colorScheme.secondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(width: 1, height: 28, color: theme.dividerColor),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.translate('quarterly_installment'),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          property.localizedQuarterlyInstallment(l10n.isArabic),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 22),
 
                       // Description
                       Text(
-                        l10n.translate('acoustic_overview'),
+                        l10n.isArabic ? 'تفاصيل الوحدة والمشروع' : 'Property & Project Details',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -443,10 +531,15 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // 3. Smart Split Calculator
-                      SmartSplitCalculator(
+                      // 3. Realistic Egyptian Payment Plan Engine & Slider Simulator
+                      EgyptianPaymentPlanSlider(
                         propertyPrice: property.price,
-                        isRent: property.priceType == 'rent',
+                        initialDownPaymentPct: (property.downPaymentPrice > 0
+                            ? (property.downPaymentPrice / property.price * 100)
+                            : 10.0),
+                        initialYears: property.installmentYears,
+                        maintenancePct: property.maintenanceRatio,
+                        cashDiscountPct: property.cashDiscountPercent,
                       ),
                       const SizedBox(height: 28),
 
@@ -531,7 +624,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                             );
                           },
                           child: Text(
-                            context.tr('coinvest_offer'),
+                            l10n.isArabic ? "طلب خطة سداد مخصصة" : "Request Custom Plan",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
