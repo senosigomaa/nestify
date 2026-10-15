@@ -40,10 +40,20 @@ class _CategoryPropertiesScreenState extends State<CategoryPropertiesScreen> {
   void initState() {
     super.initState();
     _loadProperties();
+    MockPropertiesData.propertyChangeNotifier.addListener(_onPropertiesChanged);
+  }
+
+  void _onPropertiesChanged() {
+    if (mounted) {
+      setState(() {
+        _loadProperties();
+      });
+    }
   }
 
   @override
   void dispose() {
+    MockPropertiesData.propertyChangeNotifier.removeListener(_onPropertiesChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -55,9 +65,15 @@ class _CategoryPropertiesScreenState extends State<CategoryPropertiesScreen> {
     _allCategoryProperties = all.where((p) {
       switch (widget.categoryKey) {
         case 'apartments_sale':
-          return p.category == 'apartment' && p.priceType == 'buy';
+          return (p.category == 'apartment' ||
+                  p.category == 'duplex' ||
+                  p.category == 'penthouse') &&
+              p.priceType == 'buy';
         case 'apartments_rent':
-          return p.category == 'apartment' && p.priceType == 'rent';
+          return (p.category == 'apartment' ||
+                  p.category == 'duplex' ||
+                  p.category == 'penthouse') &&
+              p.priceType == 'rent';
         case 'villas_sale':
           return (p.category == 'villa' || p.category == 'townhouse') &&
               p.priceType == 'buy';

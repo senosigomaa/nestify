@@ -215,7 +215,7 @@ class AppLocalizations {
       'cat_commercial': 'Commercial & Offices',
 
       // Hero Compound Launches
-      'exclusive_launches': 'Exclusive Compound Launches',
+      'exclusive_launches': 'Off-Plan & New Compounds',
       'discount_cash': '30% Cash Discount',
       'zero_down': '0% Down Payment',
       'delivery_2026': 'Delivery 2026',
@@ -550,7 +550,7 @@ class AppLocalizations {
       'cat_commercial': 'مكاتب إدارية وتجارية',
 
       // Hero Compound Launches
-      'exclusive_launches': 'مشاريع حصرية ومجمعات كبرى',
+      'exclusive_launches': 'كمبوندات جديدة ومشروعات تحت الإنشاء',
       'discount_cash': 'خصم كاش 30%',
       'zero_down': 'بدون مقدم 0%',
       'delivery_2026': 'استلام 2026',

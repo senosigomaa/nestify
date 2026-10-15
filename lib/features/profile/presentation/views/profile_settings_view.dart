@@ -15,6 +15,9 @@ import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_blo
 import 'package:nestify/features/explore_feed/presentation/bloc/explore_feed_state.dart';
 import 'package:nestify/features/marketplace/presentation/views/add_property_listing_screen.dart';
 import 'package:nestify/features/portfolio/presentation/views/portfolio_view.dart';
+import 'package:nestify/core/network/mock_properties_data.dart';
+import 'package:nestify/features/explore_feed/data/models/property_model.dart';
+import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
 
 /// ProfileSettingsView delivers an executive, investor-grade profile hub tailored
 /// for the Egyptian real estate market. Free of theoretical clutter, featuring:
@@ -341,10 +344,16 @@ class ProfileSettingsView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMiniStat(
-                label: l10n.isArabic ? 'إعلاناتي النشطة' : 'Active Listings',
-                value: l10n.isArabic ? '٣ عقارات' : '3 Units',
-                isDark: isDark,
+              ValueListenableBuilder<int>(
+                valueListenable: MockPropertiesData.propertyChangeNotifier,
+                builder: (context, value, child) {
+                  final count = MockPropertiesData.getMyPublishedListings().length;
+                  return _buildMiniStat(
+                    label: l10n.isArabic ? 'إعلاناتي النشطة' : 'Active Listings',
+                    value: l10n.isArabic ? '$count عقارات' : '$count Units',
+                    isDark: isDark,
+                  );
+                },
               ),
               _buildMiniStat(
                 label: l10n.isArabic ? 'إجمالي المشاهدات' : 'Total Views',
@@ -612,77 +621,157 @@ class ProfileSettingsView extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Sample Published Listing Tile
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E2838) : const Color(0xFFFBF9F5),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : const Color(0xFFE2DDD5),
-              ),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=300&q=80',
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.isArabic
-                            ? 'شقة فاخرة بماونتن فيو إي سيتي'
-                            : 'Luxury Apartment in Mountain View iCity',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '٨,٥٠٠,٠٠٠ ج.م • نشط ومميز',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          // Dynamic Published Listings List
+          ValueListenableBuilder<int>(
+            valueListenable: MockPropertiesData.propertyChangeNotifier,
+            builder: (context, value, child) {
+              final listingsJson = MockPropertiesData.getMyPublishedListings();
+              if (listingsJson.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '١,٤٢٠ مشاهدة',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF10B981),
+                    color: isDark ? const Color(0xFF1E2838) : const Color(0xFFFBF9F5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0xFFE2DDD5),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.add_home_work_outlined,
+                          size: 32,
+                          color: primaryColor.withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.isArabic
+                              ? 'لم تقم بنشر أي عقارات بعد. اضغط "إعلان جديد" لنشر عقارك فوراً.'
+                              : 'No properties published yet. Tap "New Ad" to list now.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.textSecondary
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: listingsJson.take(4).map((json) {
+                  final prop = PropertyModel.fromJson(json);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => PropertyDetailsScreen(property: prop),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E2838)
+                              : const Color(0xFFFBF9F5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFFE2DDD5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: CachedNetworkImage(
+                                imageUrl: prop.images.isNotEmpty
+                                    ? prop.images.first
+                                    : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=300&q=80',
+                                width: 52,
+                                height: 52,
+                                fit: BoxFit.cover,
+                                errorWidget: (context, url, error) => Container(
+                                  width: 52,
+                                  height: 52,
+                                  color: primaryColor.withValues(alpha: 0.15),
+                                  child: Icon(
+                                    Icons.apartment_rounded,
+                                    color: primaryColor,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    prop.title,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '${prop.localizedPrice(l10n.isArabic)} • ${l10n.isArabic ? "نشط ومميز" : "Active & Verified"}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryColor,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981)
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                l10n.isArabic ? 'معاينة' : 'View',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF10B981),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),

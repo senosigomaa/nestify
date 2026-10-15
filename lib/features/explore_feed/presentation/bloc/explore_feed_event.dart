@@ -73,3 +73,12 @@ class ToggleSavePropertyEvent extends ExploreFeedEvent {
   @override
   List<Object?> get props => [property];
 }
+
+class AddNewPropertyEvent extends ExploreFeedEvent {
+  final PropertyEntity property;
+
+  const AddNewPropertyEvent(this.property);
+
+  @override
+  List<Object?> get props => [property];
+}

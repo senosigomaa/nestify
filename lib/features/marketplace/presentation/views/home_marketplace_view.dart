@@ -18,6 +18,10 @@ import 'package:nestify/core/theme/theme_bloc/theme_state.dart';
 import 'package:nestify/features/property_details/presentation/views/property_details_screen.dart';
 import 'package:nestify/features/marketplace/presentation/views/category_properties_screen.dart';
 import 'package:nestify/features/marketplace/presentation/views/add_property_listing_screen.dart';
+import 'package:nestify/features/marketplace/data/mock_compounds_data.dart';
+import 'package:nestify/features/marketplace/domain/entities/compound_entity.dart';
+import 'package:nestify/features/marketplace/presentation/views/compound_details_screen.dart';
+import 'package:nestify/features/marketplace/presentation/views/all_compounds_screen.dart';
 
 /// HomeMarketplaceView is the flagship commercial real estate marketplace screen,
 /// rivaling Dubizzle and Property Finder with segmented sale/rent modes,
@@ -49,39 +53,24 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
 
   late List<PropertyEntity> _allProperties;
 
-  final List<Map<String, dynamic>> _compoundLaunches = [
-    {
-      'title': 'Palm Hills The Crown',
-      'developer': 'Palm Hills Developments',
-      'tag': 'خصم كاش 30% • تسليم 2026',
-      'image':
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80',
-      'downPayment': '0% مقدم',
-      'tenure': 'أقساط 8 سنوات',
-    },
-    {
-      'title': 'SODIC VYE New Zayed',
-      'developer': 'SODIC Real Estate',
-      'tag': 'بدون مقدم 0% • حديقة خاصة',
-      'image':
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1000&q=80',
-      'downPayment': '5% مقدم',
-      'tenure': 'أقساط 7 سنوات',
-    },
-    {
-      'title': 'Mountain View iCity Lagoon Beach',
-      'developer': 'ماونتن فيو للتنمية والاستثمار',
-      'tag': 'لاجون رملي خاص • تسليم 2027',
-      'image':
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1000&q=80',
-      'downPayment': '10% مقدم',
-      'tenure': 'أقساط 8 سنوات متساوية',
-    },
-  ];
+  final List<CompoundEntity> _compoundLaunches = MockCompoundsData.compounds;
 
   @override
   void initState() {
     super.initState();
+    _reloadProperties();
+    MockPropertiesData.propertyChangeNotifier.addListener(_onPropertiesChanged);
+  }
+
+  void _onPropertiesChanged() {
+    if (mounted) {
+      setState(() {
+        _reloadProperties();
+      });
+    }
+  }
+
+  void _reloadProperties() {
     _allProperties = MockPropertiesData.rawProperties
         .map((json) => PropertyModel.fromJson(json))
         .toList();
@@ -89,6 +78,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
 
   @override
   void dispose() {
+    MockPropertiesData.propertyChangeNotifier.removeListener(_onPropertiesChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -98,7 +88,7 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
       if (p.priceType != _transactionType) return false;
       if (_selectedCategory != 'all') {
         if (_selectedCategory == 'apartments_sale' || _selectedCategory == 'apartments_rent') {
-          if (p.category != 'apartment') return false;
+          if (p.category != 'apartment' && p.category != 'duplex' && p.category != 'penthouse') return false;
         } else if (_selectedCategory == 'villas_sale' || _selectedCategory == 'villas_rent') {
           if (p.category != 'villa' && p.category != 'townhouse') return false;
         } else if (_selectedCategory == 'townhouses_sale') {
@@ -596,24 +586,85 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                // 5. Exclusive Compound Launches Hero Banner Carousel
+                // 5. Off-Plan & New Compounds Carousel
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          l10n.translate('exclusive_launches'),
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.apartment_rounded,
+                                      color: primaryColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.translate('exclusive_launches'),
+                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const AllCompoundsScreen(),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      l10n.translate('view_all'),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 11,
+                                      color: primaryColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 170,
+                        height: 250,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           physics: const BouncingScrollPhysics(),
@@ -621,8 +672,8 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
                           itemCount: _compoundLaunches.length,
                           separatorBuilder: (_, _) => const SizedBox(width: 14),
                           itemBuilder: (context, index) {
-                            final launch = _compoundLaunches[index];
-                            return _buildLaunchBanner(launch);
+                            final compound = _compoundLaunches[index];
+                            return _buildLaunchBanner(compound, l10n);
                           },
                         ),
                       ),
@@ -988,111 +1039,312 @@ class _HomeMarketplaceViewState extends State<HomeMarketplaceView> {
     );
   }
 
-  Widget _buildLaunchBanner(Map<String, dynamic> launch) {
+  Widget _buildLaunchBanner(CompoundEntity compound, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+    final isArabic = l10n.isArabic;
+
     return Container(
-      width: 290,
+      width: 310,
       decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141C2B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF141C2B),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CachedNetworkImage(
-              imageUrl: launch['image'],
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: const Color(0xFF1B2433),
-                child: const Center(
-                  child: Icon(Icons.apartment_rounded, color: Colors.white24, size: 48),
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.85),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.amberGold,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                launch['tag'],
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.backgroundDark,
-                ),
-              ),
-            ),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFE8E3DB),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          Positioned(
-            bottom: 12,
-            left: 14,
-            right: 14,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CompoundDetailsScreen(compound: compound),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  launch['developer'],
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.neonCyan,
-                    fontWeight: FontWeight.w700,
+                // Top Cover Image with Badges
+                SizedBox(
+                  height: 130,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: compound.coverImage,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Container(
+                          color: isDark ? const Color(0xFF1B2433) : const Color(0xFFF1F5F9),
+                          child: const Center(
+                            child: Icon(Icons.apartment_rounded, color: Colors.white24, size: 40),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.45),
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.55),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                      // Delivery Status Badge
+                      Positioned(
+                        top: 10,
+                        right: isArabic ? 10 : null,
+                        left: isArabic ? null : 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F1B2B).withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white24, width: 0.8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.calendar_month_rounded,
+                                color: AppColors.amberGold,
+                                size: 11,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isArabic ? 'استلام ${compound.deliveryYear}' : 'Delivery ${compound.deliveryYear}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Cash Discount Badge
+                      if (compound.cashDiscountPercent > 0)
+                        Positioned(
+                          top: 10,
+                          left: isArabic ? 10 : null,
+                          right: isArabic ? null : 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.amberGold,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isArabic
+                                  ? 'خصم كاش ${compound.cashDiscountPercent}%'
+                                  : '${compound.cashDiscountPercent}% Cash Off',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F1B2B),
+                              ),
+                            ),
+                          ),
+                        ),
+                      // Location Pin at bottom edge of image
+                      Positioned(
+                        bottom: 8,
+                        left: 10,
+                        right: 10,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                compound.localizedLocation(isArabic),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  shadows: [
+                                    Shadow(color: Colors.black87, blurRadius: 4),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  launch['title'],
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${launch['downPayment']} • ${launch['tenure']}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w600,
+
+                // Bottom Content Info
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Developer Row with Logo
+                      Row(
+                        children: [
+                          ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: compound.developerLogo,
+                              width: 18,
+                              height: 18,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => Container(
+                                width: 18,
+                                height: 18,
+                                color: primaryColor.withValues(alpha: 0.15),
+                                child: Icon(Icons.business_rounded, size: 11, color: primaryColor),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              compound.developerName,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.neonCyan : const Color(0xFF0284C7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+
+                      // Compound Name
+                      Text(
+                        compound.localizedName(isArabic),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F1B2B),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+
+                      // Available Unit Types Summary
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.home_work_outlined,
+                            size: 12,
+                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              compound.unitTypesSummary(isArabic),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Payment Plan & Starting Price Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Payment Plan Highlight
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: primaryColor.withValues(alpha: 0.2),
+                                  width: 0.7,
+                                ),
+                              ),
+                              child: Text(
+                                compound.localizedPaymentPlan(isArabic),
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Starting Price
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isArabic ? 'الأسعار تبدأ من' : 'Starts from',
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                              Text(
+                                compound.formattedStartingPrice(isArabic),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? AppColors.amberGold : const Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildHotDealCard(PropertyEntity property, AppLocalizations l10n) {
     final theme = Theme.of(context);

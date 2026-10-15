@@ -18,6 +18,19 @@ class ExploreFeedBloc extends Bloc<ExploreFeedEvent, ExploreFeedState> {
     on<BookTourRequestedEvent>(_onBookTourRequested);
     on<FilterNeighborhoodEvent>(_onFilterNeighborhood);
     on<ToggleSavePropertyEvent>(_onToggleSaveProperty);
+    on<AddNewPropertyEvent>(_onAddNewProperty);
+  }
+
+  void _onAddNewProperty(
+    AddNewPropertyEvent event,
+    Emitter<ExploreFeedState> emit,
+  ) {
+    final updatedAll = [event.property, ...state.allProperties];
+    final updatedDeck = [event.property, ...state.activeDeck];
+    emit(state.copyWith(
+      allProperties: updatedAll,
+      activeDeck: updatedDeck,
+    ));
   }
 
   Future<void> _onLoadExploreFeed(

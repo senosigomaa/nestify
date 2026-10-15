@@ -1,8 +1,78 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 /// High-fidelity mock property dataset tailored specifically for the Egyptian real estate market.
 /// Enriched with premier Cairo & Giza compounds (New Cairo, Sheikh Zayed, New Capital),
 /// genuine developers, authentic payment plans, finishing types, delivery dates, and cash discounts.
 class MockPropertiesData {
   MockPropertiesData._();
+
+  static final ValueNotifier<int> propertyChangeNotifier = ValueNotifier<int>(0);
+
+  /// Add a newly published property to in-memory list and Hive storage
+  static void addProperty(Map<String, dynamic> propertyJson) {
+    rawProperties.removeWhere((p) => p['id'] == propertyJson['id']);
+    rawProperties.insert(0, propertyJson);
+
+    try {
+      if (Hive.isBoxOpen('nestify_my_listings')) {
+        final box = Hive.box('nestify_my_listings');
+        box.put(propertyJson['id'], propertyJson);
+      }
+    } catch (_) {}
+
+    propertyChangeNotifier.value++;
+  }
+
+  /// Initialize and prepend any previously saved listings from Hive
+  static void initFromHive() {
+    try {
+      if (Hive.isBoxOpen('nestify_my_listings')) {
+        final box = Hive.box('nestify_my_listings');
+        for (final k in box.keys) {
+          final val = box.get(k);
+          if (val != null) {
+            final Map<String, dynamic> map = val is Map
+                ? Map<String, dynamic>.from(val)
+                : Map<String, dynamic>.from(jsonDecode(val as String));
+            if (!rawProperties.any((p) => p['id'] == map['id'])) {
+              rawProperties.insert(0, map);
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Retrieve user-published listings
+  static List<Map<String, dynamic>> getMyPublishedListings() {
+    final List<Map<String, dynamic>> results = [];
+    try {
+      if (Hive.isBoxOpen('nestify_my_listings')) {
+        final box = Hive.box('nestify_my_listings');
+        for (final k in box.keys) {
+          final val = box.get(k);
+          if (val != null) {
+            final Map<String, dynamic> map = val is Map
+                ? Map<String, dynamic>.from(val)
+                : Map<String, dynamic>.from(jsonDecode(val as String));
+            results.add(map);
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Also include any user-created properties currently in memory
+    for (final p in rawProperties) {
+      final id = p['id'] as String? ?? '';
+      if (id.startsWith('user_prop_') && !results.any((r) => r['id'] == id)) {
+        results.add(p);
+      }
+    }
+
+    return results;
+  }
 
   static final List<Map<String, dynamic>> rawProperties = [
     {

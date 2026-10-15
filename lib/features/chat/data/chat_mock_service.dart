@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nestify/core/network/mock_properties_data.dart';
 import 'package:nestify/features/explore_feed/data/models/property_model.dart';
 import 'package:nestify/features/explore_feed/domain/entities/property_entity.dart';
+import 'package:nestify/features/marketplace/domain/entities/compound_entity.dart';
 import '../domain/entities/chat_models.dart';
 
 /// Singleton service managing in-app chat conversations with real estate brokers and agents.
@@ -188,6 +189,75 @@ class ChatMockService {
             'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
         developerOrAgency: property.developerName,
         property: property,
+        lastMessage: agentResponse.text,
+        lastMessageTime: now,
+        unreadCount: 0,
+        messages: [firstMsg, agentResponse],
+      );
+      list.insert(0, newConv);
+      conversationsNotifier.value = list;
+      _recalcUnread();
+      return newConv;
+    }
+  }
+
+  /// Starts or gets an inquiry conversation for an Off-Plan / Compound EOI.
+  ChatConversation startCompoundInquiry({
+    required CompoundEntity compound,
+    required String clientName,
+    required String clientPhone,
+    String? selectedUnitType,
+    String? notes,
+  }) {
+    final list = List<ChatConversation>.from(conversationsNotifier.value);
+    final convId = 'conv_${compound.id}';
+    final existingIndex = list.indexWhere((c) => c.id == convId);
+
+    final now = DateTime.now();
+    final unitSnippet = selectedUnitType != null && selectedUnitType.isNotEmpty
+        ? 'لوحدة [$selectedUnitType]'
+        : 'لوحدة بمشروع';
+    final notesSnippet = notes != null && notes.trim().isNotEmpty
+        ? ' • ملاحظات: ${notes.trim()}'
+        : '';
+
+    final firstMsg = ChatMessage(
+      id: 'msg_${now.millisecondsSinceEpoch}',
+      text:
+          'السلام عليكم، أرغب بتسجيل اهتمامي (EOI) وحجز أسبقية $unitSnippet في كمبوند [${compound.nameAr}]، ورقم هاتفي للتواصل: $clientPhone.$notesSnippet',
+      isUser: true,
+      timestamp: now,
+      propertyTitle: compound.nameAr,
+      propertyPrice: 'تبدأ من ${compound.formattedStartingPrice(true)}',
+      propertyImage: compound.coverImage,
+    );
+
+    final agentResponse = ChatMessage(
+      id: 'msg_${now.millisecondsSinceEpoch + 1}',
+      text:
+          'أهلاً بك يا أستاذ $clientName! تم تسجيل طلب الاهتمام والحجز المبدئي (EOI) لمشروع ${compound.nameAr}. مستشار مبيعات ${compound.developerName} سيتواصل معك فوراً لتوضيح المخطط الهندسي وأنظمة السداد المتاحة.',
+      isUser: false,
+      timestamp: now.add(const Duration(seconds: 2)),
+    );
+
+    if (existingIndex >= 0) {
+      final existing = list[existingIndex];
+      final updated = existing.copyWith(
+        lastMessage: agentResponse.text,
+        lastMessageTime: now,
+        messages: [...existing.messages, firstMsg, agentResponse],
+      );
+      list[existingIndex] = updated;
+      conversationsNotifier.value = list;
+      _recalcUnread();
+      return updated;
+    } else {
+      final newConv = ChatConversation(
+        id: convId,
+        agentName: 'مستشار مبيعات ${compound.name}',
+        agentAvatar: compound.developerLogo,
+        developerOrAgency: compound.developerName,
+        property: null,
         lastMessage: agentResponse.text,
         lastMessageTime: now,
         unreadCount: 0,
